@@ -228,6 +228,20 @@ void reloadXGD(int *dn) {
   }
 }
 
+void javaGDobject(int *dev, int *obj) {
+    int ds=NumDevices();
+    *obj=0;
+    if (*dev<0 || *dev>=ds) return;
+    GEDevDesc *gd=(GEDevDesc*)GetDevice(*dev);
+    if (gd) {
+        NewDevDesc *dd=gd->dev;
+        if (dd) {
+            newXGDDesc *xd=(newXGDDesc*) dd->deviceSpecific;
+            if (xd) *obj=(int) xd->talk;
+        }
+    }
+}
+
 void javaGDresize(int dev) {
     int ds=NumDevices();
     int i=0;
