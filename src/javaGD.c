@@ -172,7 +172,7 @@ static char *SaveString(SEXP sxp, int offset)
 {
     char *s;
     if(!isString(sxp) || length(sxp) <= offset)
-	errorcall(gcall, "invalid string argument");
+	error("invalid string argument");
     s = R_alloc(strlen(CHAR(STRING_ELT(sxp, offset)))+1, sizeof(char));
     strcpy(s, CHAR(STRING_ELT(sxp, offset)));
     return s;
@@ -187,7 +187,7 @@ Rf_addXGDDevice(char *display, double width, double height, double initps)
     char *devname="JavaGD";
 
     R_CheckDeviceAvailable();
-#ifndef Win32
+#ifdef BEGIN_SUSPEND_INTERRUPTS
     BEGIN_SUSPEND_INTERRUPTS {
 #endif
 	/* Allocate and initialize the device driver data */
@@ -207,10 +207,7 @@ Rf_addXGDDevice(char *display, double width, double height, double initps)
 	if (!newXGDDeviceDriver((DevDesc*)(dev), display, width, height, initps))
 	  {
 	    free(dev);
-	    if (gcall)
-	      errorcall(gcall, "unable to start device %s", devname);
-	    else
-	      fprintf(stderr, "unable to start device %s", devname);
+		error("unable to start device %s", devname);
 	    return 0;
 	  }
 	gsetVar(install(".Device"), mkString(devname), R_NilValue);
@@ -220,7 +217,7 @@ Rf_addXGDDevice(char *display, double width, double height, double initps)
 #ifdef JGD_DEBUG
 	printf("XGD> devNum=%d, dd=%x\n", devNumber((DevDesc*) dd), dd);
 #endif
-#ifndef Win32
+#ifdef BEGIN_SUSPEND_INTERRUPTS
     } END_SUSPEND_INTERRUPTS;
 #endif
     
@@ -334,6 +331,6 @@ void javaGDgetDisplayParam(double *par) {
 	par[2] = jGDasp;
 }
 
-void javaGDversion(int *ver) {
-	*ver=JAVAGD_VER;
+void javaGDversion(int *ver) {*
+	ver=JAVAGD_VER;
 }

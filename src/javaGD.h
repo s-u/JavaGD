@@ -1,14 +1,17 @@
 #ifndef _DEV_JAVAGD_H
 #define _DEV_JAVAGD_H
 
-#define JAVAGD_VER 0x000200 /* JavaGD v0.2-0 */
+#define JAVAGD_VER 0x000201 /* JavaGD v0.2-1 */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
 
-#include <Defn.h>
-#include <Graphics.h>
+#include <R.h>
+#include <Rinternals.h>
+#include <R_ext/GraphicsDevice.h>
+#include <R_ext/GraphicsEngine.h>
+#include <Rgraphics.h>
 #include <Rdevices.h>
 #include <jni.h>
 

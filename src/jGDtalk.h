@@ -5,9 +5,7 @@
 # include <config.h>
 #endif
 
-#include <Defn.h>
-#include <Graphics.h>
-#include <Rdevices.h>
+#include "javaGD.h"
 
 extern void setupXGDfunctions(NewDevDesc *dd);
 
