@@ -13,6 +13,14 @@ CC=`${R_HOME}/bin/R CMD config CC`;
 CFLAGS=`${R_HOME}/bin/R CMD config CFLAGS`
 AC_SUBST(R_HOME)
 
+# platform check
+#AC_CANONICAL_HOST
+#case "${host_os}" in
+#  darwin*)
+#    AC_DEFINE(DARWIN, 1, [Set if the OS is Darwin/Mac OS X.])
+#    ;;
+#esac
+
 # Checks for programs.
 AC_PROG_CC
 
@@ -87,12 +95,15 @@ AC_CHECK_FILE(${JNI_H}/solaris/jni_md.h,[JAVA_INC="${JAVA_INC} -I${JNI_H}/solari
 JAVA_LIBS=`${JAVA} -classpath . getsp -libs`
 JAVA_LIBS="${JAVA_LIBS} -ljvm"
 
-if test `uname` = "Darwin" ; then
+if test `uname -s` = "Darwin" ; then
   JAVA_LIBS="-framework JavaVM"
+  # for OS X we supply the necessary headers in the distro so in
+  # PrivateHeaders so we don't need R sources for the compilation
+  XTRA_CF="-I${R_HOME}/Headers -I${R_HOME}/PrivateHeaders"
 fi
 
 LIBS="${LIBS} ${JAVA_LIBS}"
-CFLAGS="${CFLAGS} ${JAVA_INC}"
+CFLAGS="${CFLAGS} ${XTRA_CF} ${JAVA_INC}"
 
 SAVE_LDLP="${LD_LIBRARY_PATH}"
 JAVA_LD=`${JAVA} getsp java.library.path`
@@ -123,6 +134,8 @@ AC_SUBST(JAVA_LIBS)
 AC_SUBST(JAVA_INC)
 AC_SUBST(JAVA_HOME)
 AC_SUBST(JAVA_LD)
+AC_SUBST(XTRA_CF)
+AC_SUBST(XTRA_LD)
 
 AC_CONFIG_FILES([src/Makevars])
 AC_CONFIG_FILES([R/zzz.R])
