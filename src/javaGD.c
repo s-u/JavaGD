@@ -306,12 +306,18 @@ void javaGDgetSize(int *dev, double *par) {
                  if (xd) *obj=(int) xd->talk;
              }
              */
-            par[0]=dd->left;
-            par[1]=dd->top;
-            par[2]=dd->right;
-            par[3]=dd->bottom;
-            par[4]=jGDdpiX;
-            par[5]=jGDdpiY;
+			if (dd) {
+				par[0]=dd->left;
+				par[1]=dd->top;
+				par[2]=dd->right;
+				par[3]=dd->bottom;
+				par[4]=jGDdpiX;
+				par[5]=jGDdpiY;
+			} else {
+#ifdef DEBUG
+				printf("sizefailed>> device=%d, gd=%x, dd=%x\n",*dev,gd,dd);
+#endif
+			}	
         }
     }
 }
