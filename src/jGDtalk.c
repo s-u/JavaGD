@@ -116,9 +116,11 @@ static void sendGC(JNIEnv *env, newXGDDesc *xd, R_GE_gcontext *gc, int sendAll) 
 
 /* re-set the GC - i.e. send commands for all monitored GC entries */
 static void sendAllGC(JNIEnv *env, newXGDDesc *xd, R_GE_gcontext *gc) {
+    /*
     printf("Basic GC:\n col=%08x\n fill=%08x\n gamma=%f\n lwd=%f\n lty=%08x\n cex=%f\n ps=%f\n lineheight=%f\n fontface=%d\n fantfamily=\"%s\"\n\n",
 	 gc->col, gc->fill, gc->gamma, gc->lwd, gc->lty,
 	 gc->cex, gc->ps, gc->lineheight, gc->fontface, gc->fontfamily);
+     */
     sendGC(env, xd, gc, 1);
 }
 
@@ -286,8 +288,6 @@ Rboolean newXGD_Open(NewDevDesc *dd, newXGDDesc *xd,  char *dsp, double w, doubl
 {
     if (initJavaGD(xd)) return FALSE;
     
-    printf("Open: initializing GC\n");
-    
     xd->fill = 0xffffffff; /* transparent, was R_RGB(255, 255, 255); */
     xd->col = R_RGB(0, 0, 0);
     xd->canvas = R_RGB(255, 255, 255);
@@ -312,8 +312,6 @@ Rboolean newXGD_Open(NewDevDesc *dd, newXGDDesc *xd,  char *dsp, double w, doubl
             return FALSE;
         }
     }
-    
-    printf("gdOpen: success\n");
     
     return TRUE;
 }
@@ -619,6 +617,5 @@ int initJavaGD(newXGDDesc* xd) {
         xd->talkClass = (*env)->NewGlobalRef(env, c);
     }
     
-    printf("Successfully instantiated JavaGD\n");
     return 0;
 }
