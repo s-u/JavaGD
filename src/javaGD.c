@@ -43,14 +43,15 @@
 Rboolean newXGDDeviceDriver(DevDesc *dd,
 			    char *disp_name,
 			    double width,
-			    double height)
+			    double height,
+                            double initps)
 {
   newXGDDesc *xd;
   char *fn;
 
-  printf("TD: newXGDDeviceDriver(\"%s\", %f, %f)\n",disp_name,width,height);
+  printf("TD: newXGDDeviceDriver(\"%s\", %f, %f, %f)\n",disp_name,width,height,initps);
 
-  xd = Rf_allocNewXGDDeviceDesc(10);
+  xd = Rf_allocNewXGDDeviceDesc(initps);
   if (!newXGD_Open((NewDevDesc*)(dd), xd, disp_name, width, height)) {
     free(xd);
     return FALSE;
@@ -114,7 +115,7 @@ Rf_setNewXGDDeviceData(NewDevDesc *dd, double gamma_fac, newXGDDesc *xd)
     dd->canHAdj = 2;
     dd->canChangeGamma = FALSE;
 
-    dd->startps = 10;
+    dd->startps = xd->basefontsize;
     dd->startcol = xd->col;
     dd->startfill = xd->fill;
     dd->startlty = LTY_SOLID;
@@ -170,14 +171,12 @@ static char *SaveString(SEXP sxp, int offset)
 }
 
 static DevDesc* 
-Rf_addXGDDevice(char *display, double width, double height)
+Rf_addXGDDevice(char *display, double width, double height, double initps)
 {
     NewDevDesc *dev = NULL;
     GEDevDesc *dd;
     
     char *devname="JavaGD";
-
-    printf("Rf_addXGDDevice(\"%s\", %f, %f)\n",display,width,height);
 
     R_CheckDeviceAvailable();
 #ifndef Win32
@@ -197,7 +196,7 @@ Rf_addXGDDevice(char *display, double width, double height)
 	 * R base graphics parameters.  
 	 * This is supposed to happen via addDevice now.
 	 */
-	if (!newXGDDeviceDriver((DevDesc*)(dev), display, width, height))
+	if (!newXGDDeviceDriver((DevDesc*)(dev), display, width, height, initps))
 	  {
 	    free(dev);
 	    if (gcall)
@@ -259,8 +258,6 @@ void resizedXGD(NewDevDesc *dd) {
     GEplayDisplayList((GEDevDesc*) GetDevice(devNum));
 }
 
-SEXP newXGD(char **name, double *w, double *h) {
-  Rf_addXGDDevice(*name, *w, *h);  
-
-  return R_NilValue;
+void newJavaGD(char **name, double *w, double *h, double *ps) {
+  Rf_addXGDDevice(*name, *w, *h, *ps);  
 }

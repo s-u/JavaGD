@@ -1,7 +1,7 @@
 #ifndef _DEV_JAVAGD_H
 #define _DEV_JAVAGD_H
 
-#define JAVAGD_VER 0x000102 /* JavaGD v0.1-2 */
+#define JAVAGD_VER 0x000103 /* JavaGD v0.1-3 */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -12,7 +12,7 @@
 #include <Rdevices.h>
 #include <jni.h>
 
-Rboolean newXGDDeviceDriver(DevDesc*, char*, double, double);
+Rboolean newXGDDeviceDriver(DevDesc*, char*, double, double, double);
 
 
 /********************************************************/
