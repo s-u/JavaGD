@@ -175,7 +175,7 @@ Rf_addXGDDevice(char *display, double width, double height)
     NewDevDesc *dev = NULL;
     GEDevDesc *dd;
     
-    char *devname="xGD";
+    char *devname="JavaGD";
 
     printf("Rf_addXGDDevice(\"%s\", %f, %f)\n",display,width,height);
 
