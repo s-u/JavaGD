@@ -1,14 +1,26 @@
 #include "javaGD.h"
 #include "jGDtalk.h"
+#include <Rversion.h>
 
 /* Device Driver Actions */
 
-void jgdCheckExceptions(JNIEnv *env);
+#define jgdCheckExceptions chkX
 
 #ifdef DEBUG
 #define gdWarning(S) { printf("[javaGD warning] %s\n", S); jgdCheckExceptions(getJNIEnv()); }
 #else
 #define gdWarning(S)
+#endif
+
+#if R_VERSION < 0x10900
+#error This JavaGD needs at least R version 1.9.0
+#endif
+
+/* the internal representation of a color in this API is RGBa with a=0 meaning transparent and a=255 meaning opaque (hence a means 'opacity'). previous implementation was different (inverse meaning and 0x80 as NA), so watch out. */
+#if R_VERSION < 0x20000
+#define CONVERT_COLOR(C) ((((C)==0x80000000) || ((C)==-1))?0:(((C)&0xFFFFFF)|((0xFF000000-((C)&0xFF000000)))))
+#else
+#define CONVERT_COLOR(C) (C)
 #endif
 
 static void newXGD_Activate(NewDevDesc *dd);
@@ -53,11 +65,25 @@ static void newXGD_Text(double x, double y, char *str,
 			 NewDevDesc *dd);
 
 
-static R_GE_gcontext lastGC;
+static R_GE_gcontext lastGC; /** last graphics context. the API send changes, not the entire context, so we cache it for comparison here */
 
 static JavaVM *jvm=0;
 char *jarClassPath = ".";
 
+
+/** check exception for the given environment. The exception is printed only in DEBUG mode. */
+static void chkX(JNIEnv *env)
+{
+    jthrowable t=(*env)->ExceptionOccurred(env);
+    if (t) {
+#ifndef DEBUG
+		(*env)->ExceptionDescribe(env);
+#endif
+        (*env)->ExceptionClear(env);
+    }
+}
+
+/** get java environment for the current thread or 0 if something goes wrong. */
 static JNIEnv *getJNIEnv() {
     JNIEnv *env;
     jsize l;
@@ -66,15 +92,15 @@ static JNIEnv *getJNIEnv() {
     if (!jvm) { // we're hoping that the JVM pointer won't change :P we fetch it just once
         res= JNI_GetCreatedJavaVMs(&jvm, 1, &l);
         if (res!=0) {
-            fprintf(stderr, "JNI_GetCreatedJavaVMs failed! (%d)\n",res); return;
+            fprintf(stderr, "JNI_GetCreatedJavaVMs failed! (%d)\n",res); return 0;
         }
         if (l<1) {
-            fprintf(stderr, "JNI_GetCreatedJavaVMs said there's no JVM running!\n"); return;
+            fprintf(stderr, "JNI_GetCreatedJavaVMs said there's no JVM running!\n"); return 0;
         }
     }
     res = (*jvm)->AttachCurrentThread(jvm, &env, 0);
     if (res!=0) {
-        fprintf(stderr, "AttachCurrentThread failed! (%d)\n",res); return;
+        fprintf(stderr, "AttachCurrentThread failed! (%d)\n",res); return 0;
     }
     /* if (eenv!=env)
         fprintf(stderr, "Warning! eenv=%x, but env=%x - different environments encountered!\n", eenv, env); */
@@ -83,26 +109,29 @@ static JNIEnv *getJNIEnv() {
 
 #define checkGC(e,xd,gc) sendGC(e,xd,gc,0)
 
-/* check changes in GC and issue corresponding commands if necessary */
+/** check changes in GC and issue corresponding commands if necessary */
 static void sendGC(JNIEnv *env, newXGDDesc *xd, R_GE_gcontext *gc, int sendAll) {
     jmethodID mid;
     
     if (sendAll || gc->col != lastGC.col) {
         mid = (*env)->GetMethodID(env, xd->talkClass, "gdcSetColor", "(I)V");
-        if (mid) (*env)->CallVoidMethod(env, xd->talk, mid, gc->col);
+        if (mid) (*env)->CallVoidMethod(env, xd->talk, mid, CONVERT_COLOR(gc->col));
         else gdWarning("checkGC.gdcSetColor: can't get mid");
+		chkX(env);
     }
 
     if (sendAll || gc->fill != lastGC.fill)  {
         mid = (*env)->GetMethodID(env, xd->talkClass, "gdcSetFill", "(I)V");
-        if (mid) (*env)->CallVoidMethod(env, xd->talk, mid, gc->fill);
+        if (mid) (*env)->CallVoidMethod(env, xd->talk, mid, CONVERT_COLOR(gc->fill));
         else gdWarning("checkGC.gdcSetFill: can't get mid");
+		chkX(env);
     }
 
     if (sendAll || gc->lwd != lastGC.lwd || gc->lty != lastGC.lty) {
         mid = (*env)->GetMethodID(env, xd->talkClass, "gdcSetLine", "(DI)V");
         if (mid) (*env)->CallVoidMethod(env, xd->talk, mid, gc->lwd, gc->lty);
         else gdWarning("checkGC.gdcSetLine: can't get mid");
+		chkX(env);
     }
 
     if (sendAll || gc->cex!=lastGC.cex || gc->ps!=lastGC.ps || gc->lineheight!=lastGC.lineheight || gc->fontface!=lastGC.fontface || strcmp(gc->fontfamily, lastGC.fontfamily)) {
@@ -110,6 +139,7 @@ static void sendGC(JNIEnv *env, newXGDDesc *xd, R_GE_gcontext *gc, int sendAll) 
         mid = (*env)->GetMethodID(env, xd->talkClass, "gdcSetFont", "(DDDILjava/lang/String;)V");
         if (mid) (*env)->CallVoidMethod(env, xd->talk, mid, gc->cex, gc->ps, gc->lineheight, gc->fontface, s);
         else gdWarning("checkGC.gdcSetFont: can't get mid");
+		chkX(env);
     }
     memcpy(&lastGC, gc, sizeof(lastGC));
 }
@@ -124,6 +154,8 @@ static void sendAllGC(JNIEnv *env, newXGDDesc *xd, R_GE_gcontext *gc) {
     sendGC(env, xd, gc, 1);
 }
 
+/*------- the R callbacks begin here ... ------------------------*/
+
 static void newXGD_Activate(NewDevDesc *dd)
 {
     newXGDDesc *xd = (newXGDDesc *) dd->deviceSpecific;
@@ -134,6 +166,7 @@ static void newXGD_Activate(NewDevDesc *dd)
     
     mid = (*env)->GetMethodID(env, xd->talkClass, "gdActivate", "()V");
     if (mid) (*env)->CallVoidMethod(env, xd->talk, mid);
+	chkX(env);
 }
 
 static void newXGD_Circle(double x, double y, double r,  R_GE_gcontext *gc,  NewDevDesc *dd)
@@ -148,6 +181,7 @@ static void newXGD_Circle(double x, double y, double r,  R_GE_gcontext *gc,  New
 
     mid = (*env)->GetMethodID(env, xd->talkClass, "gdCircle", "(DDD)V");
     if (mid) (*env)->CallVoidMethod(env, xd->talk, mid, x, y, r);
+	chkX(env);
 }
 
 static void newXGD_Clip(double x0, double x1, double y0, double y1,  NewDevDesc *dd)
@@ -160,6 +194,7 @@ static void newXGD_Clip(double x0, double x1, double y0, double y1,  NewDevDesc 
        
     mid = (*env)->GetMethodID(env, xd->talkClass, "gdClip", "(DDDD)V");
     if (mid) (*env)->CallVoidMethod(env, xd->talk, mid, x0, x1, y0, y1);
+	chkX(env);
 }
 
 static void newXGD_Close(NewDevDesc *dd)
@@ -172,6 +207,7 @@ static void newXGD_Close(NewDevDesc *dd)
     
     mid = (*env)->GetMethodID(env, xd->talkClass, "gdClose", "()V");
     if (mid) (*env)->CallVoidMethod(env, xd->talk, mid);
+	chkX(env);
 }
 
 static void newXGD_Deactivate(NewDevDesc *dd)
@@ -184,6 +220,7 @@ static void newXGD_Deactivate(NewDevDesc *dd)
     
     mid = (*env)->GetMethodID(env, xd->talkClass, "gdDeactivate", "()V");
     if (mid) (*env)->CallVoidMethod(env, xd->talk, mid);
+	chkX(env);
 }
 
 static void newXGD_Hold(NewDevDesc *dd)
@@ -196,6 +233,7 @@ static void newXGD_Hold(NewDevDesc *dd)
     
     mid = (*env)->GetMethodID(env, xd->talkClass, "gdHold", "()V");
     if (mid) (*env)->CallVoidMethod(env, xd->talk, mid);
+	chkX(env);
 }
 
 static Rboolean newXGD_Locator(double *x, double *y, NewDevDesc *dd)
@@ -214,9 +252,11 @@ static Rboolean newXGD_Locator(double *x, double *y, NewDevDesc *dd)
             if (!ac) return FALSE;
             *x=ac[0]; *y=ac[1];
             (*env)->ReleaseDoubleArrayElements(env, o, ac, 0);
+			chkX(env);
             return TRUE;
         }        
     }
+	chkX(env);
     
     return FALSE;
 }
@@ -233,6 +273,7 @@ static void newXGD_Line(double x1, double y1, double x2, double y2,  R_GE_gconte
     
     mid = (*env)->GetMethodID(env, xd->talkClass, "gdLine", "(DDDD)V");
     if (mid) (*env)->CallVoidMethod(env, xd->talk, mid, x1, y1, x2, y2);
+	chkX(env);
 }
 
 static void newXGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, double* descent,  double* width, NewDevDesc *dd)
@@ -255,6 +296,7 @@ static void newXGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, double
             (*env)->ReleaseDoubleArrayElements(env, o, ac, 0);
         }        
     }
+	chkX(env);
 }
 
 static void newXGD_Mode(int mode, NewDevDesc *dd)
@@ -267,6 +309,7 @@ static void newXGD_Mode(int mode, NewDevDesc *dd)
     
     mid = (*env)->GetMethodID(env, xd->talkClass, "gdMode", "(I)V");
     if (mid) (*env)->CallVoidMethod(env, xd->talk, mid, mode);
+	chkX(env);
 }
 
 static void newXGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
@@ -282,6 +325,7 @@ static void newXGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
 
     mid = (*env)->GetMethodID(env, xd->talkClass, "gdNewPage", "(I)V");
     if (mid) (*env)->CallVoidMethod(env, xd->talk, mid, devNr);
+	chkX(env);
 
     /* this is an exception - we send all GC attributes just after the NewPage command */
     sendAllGC(env, xd, gc);
@@ -312,8 +356,10 @@ Rboolean newXGD_Open(NewDevDesc *dd, newXGDDesc *xd,  char *dsp, double w, doubl
             (*env)->CallVoidMethod(env, xd->talk, mid, w, h);
         else {
             gdWarning("gdOpen: can't get mid");
+			chkX(env);
             return FALSE;
         }
+		chkX(env);
     }
     
     return TRUE;
@@ -329,11 +375,13 @@ static jarray newDoubleArray(JNIEnv *env, int n, double *ct)
         dae=(*env)->GetDoubleArrayElements(env, da, 0);
         if (!dae) {
             (*env)->DeleteLocalRef(env,da);
+			chkX(env);
             return 0;
         }
         memcpy(dae,ct,sizeof(double)*n);
         (*env)->ReleaseDoubleArrayElements(env, da, dae, 0);
     }
+	chkX(env);
     return da;
 }
 
@@ -357,6 +405,7 @@ static void newXGD_Polygon(int n, double *x, double *y,  R_GE_gcontext *gc,  New
     if (mid) (*env)->CallVoidMethod(env, xd->talk, mid, n, xa, ya);
     (*env)->DeleteLocalRef(env, xa); 
     (*env)->DeleteLocalRef(env, ya);
+	chkX(env);
 }
 
 static void newXGD_Polyline(int n, double *x, double *y,  R_GE_gcontext *gc,  NewDevDesc *dd)
@@ -380,6 +429,7 @@ static void newXGD_Polyline(int n, double *x, double *y,  R_GE_gcontext *gc,  Ne
     else gdWarning("gdPolyline: can't get mid ");
     (*env)->DeleteLocalRef(env, xa); 
     (*env)->DeleteLocalRef(env, ya);
+	chkX(env);
 }
 
 static void newXGD_Rect(double x0, double y0, double x1, double y1,  R_GE_gcontext *gc,  NewDevDesc *dd)
@@ -395,6 +445,7 @@ static void newXGD_Rect(double x0, double y0, double x1, double y1,  R_GE_gconte
     mid = (*env)->GetMethodID(env, xd->talkClass, "gdRect", "(DDDD)V");
     if (mid) (*env)->CallVoidMethod(env, xd->talk, mid, x0, y0, x1, y1);
     else gdWarning("gdRect: can't get mid ");
+	chkX(env);
 }
 
 static void newXGD_Size(double *left, double *right,  double *bottom, double *top,  NewDevDesc *dd)
@@ -416,6 +467,7 @@ static void newXGD_Size(double *left, double *right,  double *bottom, double *to
         } else gdWarning("gdSize: gdSize returned null");
     }
     else gdWarning("gdSize: can't get mid ");
+	chkX(env);
 }
 
 static double newXGD_StrWidth(char *str,  R_GE_gcontext *gc,  NewDevDesc *dd)
@@ -433,6 +485,7 @@ static double newXGD_StrWidth(char *str,  R_GE_gcontext *gc,  NewDevDesc *dd)
     mid = (*env)->GetMethodID(env, xd->talkClass, "gdStrWidth", "(Ljava/lang/String;)D");
     if (mid) return (*env)->CallDoubleMethod(env, xd->talk, mid, s);
     // s not released!
+	chkX(env);
     return 0.0;
 }
 
@@ -452,8 +505,12 @@ static void newXGD_Text(double x, double y, char *str,  double rot, double hadj,
     if (mid)
         (*env)->CallVoidMethod(env, xd->talk, mid, x, y, s, rot, hadj);
     (*env)->DeleteLocalRef(env, s);  
+	chkX(env);
 }
 
+/*-----------------------------------------------------------------------*/
+
+/** fill the R device structure with callback functions */
 void setupXGDfunctions(NewDevDesc *dd) {
     dd->open = newXGD_Open;
     dd->close = newXGD_Close;
@@ -475,15 +532,13 @@ void setupXGDfunctions(NewDevDesc *dd) {
     dd->metricInfo = newXGD_MetricInfo;
 }
 
-void jgdCheckExceptions(JNIEnv *env) {
-    jthrowable t=(*env)->ExceptionOccurred(env);
-    if (t) {
-        (*env)->ExceptionDescribe(env);
-        (*env)->ExceptionClear(env);
-    }
-}
+/*--------- Java Initialization -----------*/
 
+#ifdef Win32
+#define PATH_SEPARATOR ';'
+#else
 #define PATH_SEPARATOR ':'
+#endif
 #define USER_CLASSPATH "."
 
 static JDK1_1InitArgs vm1_args;
@@ -578,6 +633,8 @@ int initJVM(char *user_classpath) {
     return 0;
 }
 
+/*---------------- R-accessible functions -------------------*/
+
 void setJavaGDClassPath(char **cp) {
     jarClassPath=(char*)malloc(strlen(*cp)+1);
     strcpy(jarClassPath, *cp);
@@ -625,3 +682,4 @@ int initJavaGD(newXGDDesc* xd) {
     
     return 0;
 }
+
