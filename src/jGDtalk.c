@@ -6,7 +6,7 @@
 
 #define jgdCheckExceptions chkX
 
-#ifdef DEBUG
+#ifdef JGD_DEBUG
 #define gdWarning(S) { printf("[javaGD warning] %s\n", S); jgdCheckExceptions(getJNIEnv()); }
 #else
 #define gdWarning(S)
@@ -71,12 +71,12 @@ static JavaVM *jvm=0;
 char *jarClassPath = ".";
 
 
-/** check exception for the given environment. The exception is printed only in DEBUG mode. */
+/** check exception for the given environment. The exception is printed only in JGD_DEBUG mode. */
 static void chkX(JNIEnv *env)
 {
     jthrowable t=(*env)->ExceptionOccurred(env);
     if (t) {
-#ifndef DEBUG
+#ifndef JGD_DEBUG
 		(*env)->ExceptionDescribe(env);
 #endif
         (*env)->ExceptionClear(env);
@@ -627,7 +627,7 @@ int initJVM(char *user_classpath) {
     
 #endif
     if (res != 0 || env == NULL) {
-        printf("Can't create Java Virtual Machine\n");
+        printf("Can't create Java Virtual Machine (res=%d)\n", res);
         return -1;
     }
     return 0;

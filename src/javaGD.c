@@ -53,7 +53,7 @@ Rboolean newXGDDeviceDriver(DevDesc *dd,
   newXGDDesc *xd;
   char *fn;
 
-#ifdef DEBUG
+#ifdef JGD_DEBUG
   printf("TD: newXGDDeviceDriver(\"%s\", %f, %f, %f)\n",disp_name,width,height,initps);
 #endif
 
@@ -76,7 +76,7 @@ Rboolean newXGDDeviceDriver(DevDesc *dd,
 int
 Rf_setNewXGDDeviceData(NewDevDesc *dd, double gamma_fac, newXGDDesc *xd)
 {
-#ifdef DEBUG
+#ifdef JGD_DEBUG
 	printf("Rf_setNewXGDDeviceData\n");
 #endif
     dd->newDevStruct = 1;
@@ -217,7 +217,7 @@ Rf_addXGDDevice(char *display, double width, double height, double initps)
 	dd = GEcreateDevDesc(dev);
 	addDevice((DevDesc*) dd);
 	GEinitDisplayList(dd);
-#ifdef DEBUG
+#ifdef JGD_DEBUG
 	printf("XGD> devNum=%d, dd=%x\n", devNumber((DevDesc*) dd), dd);
 #endif
 #ifndef Win32
@@ -233,7 +233,7 @@ void reloadXGD(int *dn) {
 	GEDevDesc *gd=(GEDevDesc*)GetDevice(*dn);
 	if (gd) {
 		NewDevDesc *dd=gd->dev;
-#ifdef DEBUG
+#ifdef JGD_DEBUG
 		printf("reloadXGD: dn=%d, dd=%x\n", *dn, dd);
 #endif
 		if (dd) resizedXGD(dd);
@@ -262,11 +262,11 @@ void javaGDresize(int dev) {
         GEDevDesc *gd=(GEDevDesc*)GetDevice(i);
         if (gd) {
             NewDevDesc *dd=gd->dev;
-#ifdef DEBUG
+#ifdef JGD_DEBUG
             printf("javaGDresize: device=%d, dd=%x\n", i, dd);
 #endif
             if (dd) {
-#ifdef DEBUG
+#ifdef JGD_DEBUG
                 printf("dd->size=%x\n", dd->size);
 #endif
                 dd->size(&(dd->left), &(dd->right), &(dd->bottom), &(dd->top), dd);
@@ -280,7 +280,7 @@ void javaGDresize(int dev) {
 void resizedXGD(NewDevDesc *dd) {
 	int devNum;
 	newXGDDesc *xd = (newXGDDesc *) dd->deviceSpecific;
-#ifdef DEBUG
+#ifdef JGD_DEBUG
 	printf("dd->size=%x\n", dd->size);
 #endif
 	dd->size(&(dd->left), &(dd->right), &(dd->bottom), &(dd->top), dd);
@@ -314,7 +314,7 @@ void javaGDgetSize(int *dev, double *par) {
 				par[4]=jGDdpiX;
 				par[5]=jGDdpiY;
 			} else {
-#ifdef DEBUG
+#ifdef JGD_DEBUG
 				printf("sizefailed>> device=%d, gd=%x, dd=%x\n",*dev,gd,dd);
 #endif
 			}	
