@@ -274,18 +274,21 @@ static void newXGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
     newXGDDesc *xd = (newXGDDesc *) dd->deviceSpecific;
     JNIEnv *env = getJNIEnv();
     jmethodID mid;
+    int devNr;
     
     if(!env || !xd || !xd->talk) return;
     
-    mid = (*env)->GetMethodID(env, xd->talkClass, "gdNewPage", "()V");
-    if (mid) (*env)->CallVoidMethod(env, xd->talk, mid);
+    devNr = devNumber((DevDesc*) dd);
+
+    mid = (*env)->GetMethodID(env, xd->talkClass, "gdNewPage", "(I)V");
+    if (mid) (*env)->CallVoidMethod(env, xd->talk, mid, devNr);
 
     /* this is an exception - we send all GC attributes just after the NewPage command */
     sendAllGC(env, xd, gc);
 }
 
 Rboolean newXGD_Open(NewDevDesc *dd, newXGDDesc *xd,  char *dsp, double w, double h)
-{
+{   
     if (initJavaGD(xd)) return FALSE;
     
     xd->fill = 0xffffffff; /* transparent, was R_RGB(255, 255, 255); */
@@ -293,7 +296,7 @@ Rboolean newXGD_Open(NewDevDesc *dd, newXGDDesc *xd,  char *dsp, double w, doubl
     xd->canvas = R_RGB(255, 255, 255);
     xd->windowWidth = w;
     xd->windowHeight = h;
-    
+        
     {
         JNIEnv *env = getJNIEnv();
         jmethodID mid;
@@ -597,8 +600,11 @@ int initJavaGD(newXGDDesc* xd) {
     {
         jobject o;
         jmethodID mid;
-        jclass c=(*env)->FindClass(env, "org/rosuda/javaGD/JavaGD");
+        jclass c=0;
+        char *customClass=getenv("JAVAGD_CLASS_NAME");
+        if (customClass) c=(*env)->FindClass(env, customClass);
         if (!c) c=(*env)->FindClass(env, "org/rosuda/javaGD/JavaGD");
+        if (!c) c=(*env)->FindClass(env, "JavaGD");
         if (!c) { gdWarning("initJavaGD: can't find JavaGD class"); return -2; };
         
         mid=(*env)->GetMethodID(env, c, "<init>", "()V");
