@@ -22,6 +22,10 @@
 #define R_JAVAGD 1
 #include "javaGD.h"
 
+double jGDdpiX = 100.0;
+double jGDdpiY = 100.0;
+double jGDasp  = 1.0;
+
 /********************************************************/
 /* If there are resources that are shared by all devices*/
 /* of this type, you may wish to make them globals	*/
@@ -101,9 +105,9 @@ Rf_setNewXGDDeviceData(NewDevDesc *dd, double gamma_fac, newXGDDesc *xd)
 
     /* Inches per raster unit */
 
-    dd->ipr[0] = 0.01;
-    dd->ipr[1] = 0.01;
-    dd->asp = 1.0;
+    dd->ipr[0] = 1/jGDdpiX;
+    dd->ipr[1] = 1/jGDdpiY;
+    dd->asp = jGDasp;
 
     /* Device capabilities */
 
@@ -274,4 +278,27 @@ void resizedXGD(NewDevDesc *dd) {
 
 void newJavaGD(char **name, double *w, double *h, double *ps) {
   Rf_addXGDDevice(*name, *w, *h, *ps);  
+}
+
+void javaGDgetSize(int *dev, double *par) {
+    int ds=NumDevices();
+    if (*dev<0 || *dev>=ds) return;
+    {
+        GEDevDesc *gd=(GEDevDesc*)GetDevice(*dev);
+        if (gd) {
+            NewDevDesc *dd=gd->dev;
+            /*
+             if (dd) {
+                 newXGDDesc *xd=(newXGDDesc*) dd->deviceSpecific;
+                 if (xd) *obj=(int) xd->talk;
+             }
+             */
+            par[0]=dd->left;
+            par[1]=dd->top;
+            par[2]=dd->right;
+            par[3]=dd->bottom;
+            par[4]=jGDdpiX;
+            par[5]=jGDdpiY;
+        }
+    }
 }
