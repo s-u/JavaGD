@@ -3,8 +3,10 @@
 
 /* Device Driver Actions */
 
+void jgdCheckExceptions(JNIEnv *env);
+
 #ifdef DEBUG
-#define gdWarning(S) printf("[javaGD warning] %s", S)
+#define gdWarning(S) { printf("[javaGD warning] %s\n", S); jgdCheckExceptions(getJNIEnv()); }
 #else
 #define gdWarning(S)
 #endif
@@ -29,7 +31,7 @@ static void newXGD_MetricInfo(int c,
 static void newXGD_Mode(int mode, NewDevDesc *dd);
 static void newXGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd);
 Rboolean newXGD_Open(NewDevDesc *dd, newXGDDesc *xd,
-		     char *dsp, double w, double h, char *host, int port);
+		     char *dsp, double w, double h);
 static void newXGD_Polygon(int n, double *x, double *y,
 			   R_GE_gcontext *gc,
 			   NewDevDesc *dd);
@@ -280,32 +282,40 @@ static void newXGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
     sendAllGC(env, xd, gc);
 }
 
-Rboolean newXGD_Open(NewDevDesc *dd, newXGDDesc *xd,  char *dsp, double w, double h, char *host, int port)
+Rboolean newXGD_Open(NewDevDesc *dd, newXGDDesc *xd,  char *dsp, double w, double h)
 {
-   if (initJavaGD(xd)) return FALSE;
-
-   xd->fill = 0xffffffff; /* transparent, was R_RGB(255, 255, 255); */
-   xd->col = R_RGB(0, 0, 0);
-   xd->canvas = R_RGB(255, 255, 255);
-   xd->windowWidth = w;
-   xd->windowHeight = h;
-
-   {
-       newXGDDesc *xd = (newXGDDesc *) dd->deviceSpecific;
-       JNIEnv *env = getJNIEnv();
-       jmethodID mid;
-   
-       if(!env || !xd || !xd->talk) return;
-   
-       /* we're not using dsp atm! */
-       mid = (*env)->GetMethodID(env, xd->talkClass, "gdOpen", "(DD)V");
-       if (mid)
-           (*env)->CallVoidMethod(env, xd->talk, mid, w, h);
-       else
-           return FALSE;
-   }
-   
-   return TRUE;
+    if (initJavaGD(xd)) return FALSE;
+    
+    printf("Open: initializing GC\n");
+    
+    xd->fill = 0xffffffff; /* transparent, was R_RGB(255, 255, 255); */
+    xd->col = R_RGB(0, 0, 0);
+    xd->canvas = R_RGB(255, 255, 255);
+    xd->windowWidth = w;
+    xd->windowHeight = h;
+    
+    {
+        JNIEnv *env = getJNIEnv();
+        jmethodID mid;
+        
+        if(!env || !xd || !xd->talk) {
+            gdWarning("gdOpen: env, xd or talk is null");
+            return FALSE;
+        }
+        
+        /* we're not using dsp atm! */
+        mid = (*env)->GetMethodID(env, xd->talkClass, "gdOpen", "(DD)V");
+        if (mid)
+            (*env)->CallVoidMethod(env, xd->talk, mid, w, h);
+        else {
+            gdWarning("gdOpen: can't get mid");
+            return FALSE;
+        }
+    }
+    
+    printf("gdOpen: success\n");
+    
+    return TRUE;
 }
 
 static jarray newDoubleArray(JNIEnv *env, int n, double *ct)
@@ -433,13 +443,13 @@ static void newXGD_Text(double x, double y, char *str,  double rot, double hadj,
     jstring s;
     
     if(!env || !xd || !xd->talk) return;
-    
+        
     checkGC(env,xd, gc);
     
     s = (*env)->NewStringUTF(env, str);
-    mid = (*env)->GetMethodID(env, xd->talkClass, "gdStrText", "(DDLjava/lang/String;)D");
+    mid = (*env)->GetMethodID(env, xd->talkClass, "gdText", "(DDLjava/lang/String;DD)V");
     if (mid)
-        (*env)->CallVoidMethod(env, xd->talk, mid, x, y, s);
+        (*env)->CallVoidMethod(env, xd->talk, mid, x, y, s, rot, hadj);
     (*env)->DeleteLocalRef(env, s);  
 }
 
@@ -567,6 +577,11 @@ int initJVM(char *user_classpath) {
     return 0;
 }
 
+void setJavaGDClassPath(char **cp) {
+    printf("classpath=%s", *cp);
+    jarClassPath=(char*)malloc(strlen(*cp)+1);
+    strcpy(jarClassPath, *cp);
+}
 
 int initJavaGD(newXGDDesc* xd) {
     JNIEnv *env=getJNIEnv();
