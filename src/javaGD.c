@@ -180,7 +180,9 @@ Rf_addXGDDevice(char *display, double width, double height)
     printf("Rf_addXGDDevice(\"%s\", %f, %f)\n",display,width,height);
 
     R_CheckDeviceAvailable();
+#ifndef Win32
     BEGIN_SUSPEND_INTERRUPTS {
+#endif
 	/* Allocate and initialize the device driver data */
 	if (!(dev = (NewDevDesc*)calloc(1, sizeof(NewDevDesc))))
 	    return 0;
@@ -209,7 +211,9 @@ Rf_addXGDDevice(char *display, double width, double height)
 	addDevice((DevDesc*) dd);
 	GEinitDisplayList(dd);
 	printf("XGD> devNum=%d, dd=%x\n", devNumber((DevDesc*) dd), dd);
+#ifndef Win32
     } END_SUSPEND_INTERRUPTS;
+#endif
     
     return((DevDesc*) dd);
 }
