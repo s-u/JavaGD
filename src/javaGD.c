@@ -321,3 +321,19 @@ void javaGDgetSize(int *dev, double *par) {
         }
     }
 }
+
+void javaGDsetDisplayParam(double *par) {
+	jGDdpiX = par[0];
+	jGDdpiY = par[1];
+	jGDasp  = par[2];
+}
+
+void javaGDgetDisplayParam(double *par) {
+	par[0] = jGDdpiX;
+	par[1] = jGDdpiY;
+	par[2] = jGDasp;
+}
+
+void javaGDversion(int *ver) {
+	*ver=JAVAGD_VER;
+}
