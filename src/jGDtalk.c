@@ -578,9 +578,12 @@ int initJVM(char *user_classpath) {
 }
 
 void setJavaGDClassPath(char **cp) {
-    printf("classpath=%s", *cp);
     jarClassPath=(char*)malloc(strlen(*cp)+1);
     strcpy(jarClassPath, *cp);
+}
+
+void getJavaGDClassPath(char **cp) {
+    *cp=jarClassPath;
 }
 
 int initJavaGD(newXGDDesc* xd) {
