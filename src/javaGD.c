@@ -225,10 +225,29 @@ void reloadXGD(int *dn) {
   }
 }
 
+void javaGDresize(int dev) {
+    int ds=NumDevices();
+    int i=0;
+    if (dev>=0 && dev<ds) { i=dev; ds=dev+1; }
+    while (i<ds) {
+        GEDevDesc *gd=(GEDevDesc*)GetDevice(i);
+        if (gd) {
+            NewDevDesc *dd=gd->dev;
+            printf("javaGDresize: device=%d, dd=%x\n", i, dd);
+            if (dd) {
+                printf("dd->size=%x\n", dd->size);
+                dd->size(&(dd->left), &(dd->right), &(dd->bottom), &(dd->top), dd);
+                GEplayDisplayList(gd);
+            }
+        }
+        i++;
+    }
+}
+
 void resizedXGD(NewDevDesc *dd) {
   int devNum;
   newXGDDesc *xd = (newXGDDesc *) dd->deviceSpecific;
-  setupXGDfunctions(dd);
+  //setupXGDfunctions(dd);
   printf("dd->size=%x\n", dd->size);
   dd->size(&(dd->left), &(dd->right), &(dd->bottom), &(dd->top), dd);
   devNum = devNumber((DevDesc*) dd);
