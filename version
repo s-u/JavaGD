@@ -1,0 +1,9 @@
+#!/bin/sh
+
+PNAME=JavaGD
+VER=`awk -v ORS= '/JavaGD v/ { print substr($6,2) }' src/javaGD.h`
+if test "$1" == "-f"; then 
+    echo "${PNAME}_${VER}.tar.gz"
+else
+    echo "${VER}"
+fi
