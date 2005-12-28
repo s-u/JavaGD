@@ -237,18 +237,25 @@ void reloadXGD(int *dn) {
 	}
 }
 
-void javaGDobject(int *dev, int *obj) {
-    int ds=NumDevices();
-    *obj=0;
-    if (*dev<0 || *dev>=ds) return;
-    GEDevDesc *gd=(GEDevDesc*)GetDevice(*dev);
-    if (gd) {
-        NewDevDesc *dd=gd->dev;
-        if (dd) {
-            newXGDDesc *xd=(newXGDDesc*) dd->deviceSpecific;
-            if (xd) *obj=(int) xd->talk;
-        }
+SEXP javaGDobjectCall(SEXP dev) {
+  int ds=NumDevices();
+  int dn;
+  GEDevDesc *gd;
+  void *ptr=0;
+
+  if (!isInteger(dev) || LENGTH(dev)<1) return R_NilValue;
+  dn = INTEGER(dev)[0];
+  if (dn<0 || dn>=ds) return R_NilValue;
+  gd=(GEDevDesc*)GetDevice(dn);
+  if (gd) {
+    NewDevDesc *dd=gd->dev;
+    if (dd) {
+      newXGDDesc *xd=(newXGDDesc*) dd->deviceSpecific;
+      if (xd) ptr = xd->talk;
     }
+  }
+  if (!ptr) return R_NilValue;
+  return R_MakeExternalPtr(ptr, R_NilValue, R_NilValue);
 }
 
 void javaGDresize(int dev) {
