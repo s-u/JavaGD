@@ -22,12 +22,22 @@ fi
 
 if [ ! -e getsp.class ]; then
     echo "Compiling getsp.class"
-    javac getsp.java
+    javac -target 1.1 -source 1.2 getsp.java
 fi
 
 echo "Removing CVS and backup stuff ..."
 find . -name CVS | xargs rm -rf
 find . -name \*~ | xargs rm -f
+
+if [ ! -e src/java/javaGD.jar ]; then
+    make -C src/java 'JFLAGS=-source 1.2 -target 1.2'
+    if [ $? != 0 ]; then
+	exit 1
+    fi
+    mkdir -p inst/java
+    mv src/java/javaGD.jar inst/java
+    make -C src/java clean
+fi
 
 echo "Updating version ..."
 VER=`awk -v ORS= '/JavaGD v/ { print substr($6,2) }' src/javaGD.h`
