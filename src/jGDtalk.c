@@ -2,6 +2,8 @@
 #include "jGDtalk.h"
 #include <Rversion.h>
 
+int initJavaGD(newXGDDesc* xd);
+
 /* Device Driver Actions */
 
 #define jgdCheckExceptions chkX
@@ -89,18 +91,18 @@ static JNIEnv *getJNIEnv() {
     jsize l;
     jint res;
     
-    if (!jvm) { // we're hoping that the JVM pointer won't change :P we fetch it just once
+    if (!jvm) { /* we're hoping that the JVM pointer won't change :P we fetch it just once */
         res= JNI_GetCreatedJavaVMs(&jvm, 1, &l);
         if (res!=0) {
-            fprintf(stderr, "JNI_GetCreatedJavaVMs failed! (%d)\n",res); return 0;
+            fprintf(stderr, "JNI_GetCreatedJavaVMs failed! (%d)\n", (int)res); return 0;
         }
         if (l<1) {
-            fprintf(stderr, "JNI_GetCreatedJavaVMs said there's no JVM running!\n"); return 0;
+	  /* fprintf(stderr, "JNI_GetCreatedJavaVMs said there's no JVM running!\n"); */ return 0;
         }
     }
-    res = (*jvm)->AttachCurrentThread(jvm, &env, 0);
+    res = (*jvm)->AttachCurrentThread(jvm, (void**) &env, 0);
     if (res!=0) {
-        fprintf(stderr, "AttachCurrentThread failed! (%d)\n",res); return 0;
+        fprintf(stderr, "AttachCurrentThread failed! (%d)\n", (int)res); return 0;
     }
     /* if (eenv!=env)
         fprintf(stderr, "Warning! eenv=%x, but env=%x - different environments encountered!\n", eenv, env); */
@@ -477,14 +479,14 @@ static double newXGD_StrWidth(char *str,  R_GE_gcontext *gc,  NewDevDesc *dd)
     jmethodID mid;
     jstring s;
     
-    if(!env || !xd || !xd->talk) return;
+    if(!env || !xd || !xd->talk) return 0.0;
     
     checkGC(env,xd, gc);
     
     s = (*env)->NewStringUTF(env, str);
     mid = (*env)->GetMethodID(env, xd->talkClass, "gdStrWidth", "(Ljava/lang/String;)D");
     if (mid) return (*env)->CallDoubleMethod(env, xd->talk, mid, s);
-    // s not released!
+    /* s not released! */
 	chkX(env);
     return 0.0;
 }
@@ -589,8 +591,6 @@ int initJVM(char *user_classpath) {
     }
 #if defined(JNI_VERSION_1_2)
     else {
-        char *interfaceLibraryProperty, *java_lib_path; 
-        int i;
         int total_num_properties, propNum = 0;
         
         /* total_num_properties = N_JDK_OPTIONS+n_properties; */
@@ -627,7 +627,7 @@ int initJVM(char *user_classpath) {
     
 #endif
     if (res != 0 || env == NULL) {
-        printf("Can't create Java Virtual Machine (res=%d)\n", res);
+        printf("Can't create Java Virtual Machine (res=%d)\n", (int)res);
         return -1;
     }
     return 0;

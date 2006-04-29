@@ -21,6 +21,7 @@
 
 #define R_JAVAGD 1
 #include "javaGD.h"
+#include "jGDtalk.h"
 
 double jGDdpiX = 100.0;
 double jGDdpiY = 100.0;
@@ -51,7 +52,6 @@ Rboolean newXGDDeviceDriver(DevDesc *dd,
                             double initps)
 {
   newXGDDesc *xd;
-  char *fn;
 
 #ifdef JGD_DEBUG
   printf("TD: newXGDDeviceDriver(\"%s\", %f, %f, %f)\n",disp_name,width,height,initps);
@@ -166,8 +166,7 @@ newXGDDesc * Rf_allocNewXGDDeviceDesc(double ps)
 typedef Rboolean (*XGDDeviceDriverRoutine)(DevDesc*, char*, 
 					    double, double);
 
-static SEXP gcall;
-
+/*
 static char *SaveString(SEXP sxp, int offset)
 {
     char *s;
@@ -176,7 +175,7 @@ static char *SaveString(SEXP sxp, int offset)
     s = R_alloc(strlen(CHAR(STRING_ELT(sxp, offset)))+1, sizeof(char));
     strcpy(s, CHAR(STRING_ELT(sxp, offset)));
     return s;
-}
+} */
 
 static DevDesc* 
 Rf_addXGDDevice(char *display, double width, double height, double initps)
@@ -215,7 +214,7 @@ Rf_addXGDDevice(char *display, double width, double height, double initps)
 	addDevice((DevDesc*) dd);
 	GEinitDisplayList(dd);
 #ifdef JGD_DEBUG
-	printf("XGD> devNum=%d, dd=%x\n", devNumber((DevDesc*) dd), dd);
+	printf("XGD> devNum=%d, dd=%lx\n", devNumber((DevDesc*) dd), (unsigned long)dd);
 #endif
 #ifdef BEGIN_SUSPEND_INTERRUPTS
     } END_SUSPEND_INTERRUPTS;
@@ -231,7 +230,7 @@ void reloadXGD(int *dn) {
 	if (gd) {
 		NewDevDesc *dd=gd->dev;
 #ifdef JGD_DEBUG
-		printf("reloadXGD: dn=%d, dd=%x\n", *dn, dd);
+		printf("reloadXGD: dn=%d, dd=%lx\n", *dn, (unsigned long)dd);
 #endif
 		if (dd) resizedXGD(dd);
 	}
@@ -267,11 +266,11 @@ void javaGDresize(int dev) {
         if (gd) {
             NewDevDesc *dd=gd->dev;
 #ifdef JGD_DEBUG
-            printf("javaGDresize: device=%d, dd=%x\n", i, dd);
+            printf("javaGDresize: device=%d, dd=%lx\n", i, (unsigned long)dd);
 #endif
             if (dd) {
 #ifdef JGD_DEBUG
-                printf("dd->size=%x\n", dd->size);
+                printf("dd->size=%lx\n", (unsigned long)dd->size);
 #endif
                 dd->size(&(dd->left), &(dd->right), &(dd->bottom), &(dd->top), dd);
                 GEplayDisplayList(gd);
@@ -283,9 +282,9 @@ void javaGDresize(int dev) {
 
 void resizedXGD(NewDevDesc *dd) {
 	int devNum;
-	newXGDDesc *xd = (newXGDDesc *) dd->deviceSpecific;
+	/* newXGDDesc *xd = (newXGDDesc *) dd->deviceSpecific; */
 #ifdef JGD_DEBUG
-	printf("dd->size=%x\n", dd->size);
+	printf("dd->size=%lx\n", (unsigned long)dd->size);
 #endif
 	dd->size(&(dd->left), &(dd->right), &(dd->bottom), &(dd->top), dd);
 	devNum = devNumber((DevDesc*) dd);
@@ -319,7 +318,8 @@ void javaGDgetSize(int *dev, double *par) {
 				par[5]=jGDdpiY;
 			} else {
 #ifdef JGD_DEBUG
-				printf("sizefailed>> device=%d, gd=%x, dd=%x\n",*dev,gd,dd);
+				printf("sizefailed>> device=%d, gd=%lx, dd=%lx\n",*dev,
+				       (unsigned long)gd, (unsigned long)dd);
 #endif
 			}	
         }

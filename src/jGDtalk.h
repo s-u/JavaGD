@@ -9,4 +9,7 @@
 
 extern void setupXGDfunctions(NewDevDesc *dd);
 
+Rboolean newXGD_Open(NewDevDesc *dd, newXGDDesc *xd,  char *dsp, double w, double h);
+
+
 #endif

@@ -1,7 +1,7 @@
 #ifndef _DEV_JAVAGD_H
 #define _DEV_JAVAGD_H
 
-#define JAVAGD_VER 0x000302 /* JavaGD v0.3-2 */
+#define JAVAGD_VER 0x000303 /* JavaGD v0.3-3 */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -16,7 +16,6 @@
 #include <jni.h>
 
 Rboolean newXGDDeviceDriver(DevDesc*, char*, double, double, double);
-
 
 /********************************************************/
 /* Each driver can have its own device-specic graphical */
@@ -66,6 +65,7 @@ typedef struct {
 } newXGDDesc;
 
 newXGDDesc * Rf_allocNewXGDDeviceDesc(double ps);
+int Rf_setNewXGDDeviceData(NewDevDesc *dd, double gamma_fac, newXGDDesc *xd);
 
 #endif
 
