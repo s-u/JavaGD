@@ -16,7 +16,7 @@ function(libname, pkgname) {
 	    key<-paste(key,jrever,sep="\\")
 	    micro <- .Call("RegGetStrValue", c(key,"MicroVersion"))
 	    if (!is.null(micro)) dispver <- paste(dispver,micro,sep=".")
-	    cat("using Java Runtime version",dispver,"\n")
+#	    cat("using Java Runtime version",dispver,"\n")
 	    javahome <- .Call("RegGetStrValue",c(key,"JavaHome"))
 	    if (!is.null(javahome)) { # ok, let's try to get the real lib path
 		p <- .Call("RegGetStrValue",c(key,"RuntimeLib"))
@@ -35,10 +35,10 @@ function(libname, pkgname) {
 	    stop("JAVA_HOME is not set")
     }
     if(!nchar(javahome)) stop("JAVA_HOME is not set")
-    else cat("using JAVA_HOME =", javahome, "\n")
+#    else cat("using JAVA_HOME =", javahome, "\n")
     Sys.putenv(PATH=paste(Sys.getenv("PATH"),
                file.path(javahome, "bin", "client"), sep=";"))
-    .javaGD.jar.file<-paste(libname,pkgname,"libs","javaGD.jar",sep=.Platform$file.sep)
+    .javaGD.jar.file<-paste(libname,pkgname,"java","javaGD.jar",sep=.Platform$file.sep)
     library.dynam("JavaGD", pkgname, libname)
     # set internal classpath in case we really need to initialize the JVM
     .C("setJavaGDClassPath",paste(.javaGD.jar.file,Sys.getenv("CLASSPATH"),sep=";"))
