@@ -97,7 +97,7 @@ Rf_setNewXGDDeviceData(NewDevDesc *dd, double gamma_fac, newXGDDesc *xd)
     /* Nominal Character Sizes in Pixels */
 
     dd->cra[0] = 8;
-    dd->cra[1] = 8;
+    dd->cra[1] = 11;
 
     /* Character Addressing Offsets */
     /* These are used to plot a single plotting character */
