@@ -9,7 +9,7 @@
     s<-.javaGD.get.size(devNr)
     pd<-dev.cur()
     dev.set(devNr)
-    dev.copy(device, width=s$width/s$dpiX+width.diff, height=s$height/s$dpiY+height.diff, ...)
+    dev.copy(device, width=par()$din[1]/0.72+width.diff, height=par()$din[2]/0.72+height.diff, ...)
     dev.off()
     dev.set(pd)
     invisible(devNr)
