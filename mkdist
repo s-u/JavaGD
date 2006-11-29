@@ -25,8 +25,8 @@ if [ ! -e getsp.class ]; then
     javac -target 1.1 -source 1.2 getsp.java
 fi
 
-echo "Removing CVS and backup stuff ..."
-find . -name CVS | xargs rm -rf
+echo "Removing SVN/CVS and backup stuff ..."
+find . -name CVS -or -name .svn | xargs rm -rf
 find . -name \*~ | xargs rm -f
 
 if [ ! -e src/java/javaGD.jar ]; then
@@ -34,7 +34,12 @@ if [ ! -e src/java/javaGD.jar ]; then
     if [ ! -e src/java/Makefile ]; then
 	rm -rf src/java
 	mkdir src/java 2> /dev/null
-	: ${JAVASRC=$SWD/../../../org/rosuda/javaGD}
+	if [ -z "${ORGPATH}" ]; then
+	    DEFAULTSRC=$SWD/../../../org/rosuda/javaGD
+	else
+	    DEFAULTSRC="${ORGPATH}/rosuda/javaGD"
+	fi
+	: ${JAVASRC=$DEFAULTSRC}
 	if [ ! -e "$JAVASRC/GDInterface.java" ]; then
 	    echo "*** ERROR: cannot find javaGD sources in $JAVASRC ***"
 	    echo "Please set JAVASRC to the directory containing javaGD sources"
