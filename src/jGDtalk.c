@@ -4,6 +4,8 @@
 
 int initJavaGD(newXGDDesc* xd);
 
+char *symbol2utf8(const char *c); /* from s2u.c */
+
 /* Device Driver Actions */
 
 #define jgdCheckExceptions chkX
@@ -502,6 +504,8 @@ static void newXGD_Text(double x, double y, char *str,  double rot, double hadj,
         
     checkGC(env,xd, gc);
     
+    if (gc->fontface==5) /* symbol font needs re-coding to UTF-8 */
+      str = symbol2utf8(str);
     s = (*env)->NewStringUTF(env, str);
     mid = (*env)->GetMethodID(env, xd->talkClass, "gdText", "(DDLjava/lang/String;DD)V");
     if (mid)
