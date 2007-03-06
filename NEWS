@@ -1,0 +1,9 @@
+ NEWS/Changelog for JavaGD
+---------------------------
+
+0.3-6	2007-03-06
+    o	Text using symbols (fontface=5) is re-coded to unicode in
+	UTF-8 encoding before it's passed to Java. The back-end now
+	displays symbols correctly.
+
+0.3-5	2006-09-15
