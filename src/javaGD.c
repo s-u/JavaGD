@@ -34,55 +34,55 @@ double jGDasp  = 1.0;
 /* parameters structure (especially if they are large !)*/
 /********************************************************/
 
-/* XGD Driver Specific parameters
+/* JavaGD Driver Specific parameters
  * with only one copy for all xGD devices */
 
 
-/*  XGD Device Driver Arguments	:	*/
+/*  JavaGD Device Driver Arguments	:	*/
 /*	1) display name			*/
 /*	2) width (pixels)		*/
 /*	3) height (pixels)		*/
 /*	4) host to connect to		*/
 /*	5) tcp port to connect to	*/
 
-Rboolean newXGDDeviceDriver(DevDesc *dd,
+Rboolean newJavaGDDeviceDriver(DevDesc *dd,
 			    char *disp_name,
 			    double width,
 			    double height,
                             double initps)
 {
-  newXGDDesc *xd;
+  newJavaGDDesc *xd;
 
 #ifdef JGD_DEBUG
-  printf("TD: newXGDDeviceDriver(\"%s\", %f, %f, %f)\n",disp_name,width,height,initps);
+  printf("TD: newJavaGDDeviceDriver(\"%s\", %f, %f, %f)\n",disp_name,width,height,initps);
 #endif
 
-  xd = Rf_allocNewXGDDeviceDesc(initps);
-  if (!newXGD_Open((NewDevDesc*)(dd), xd, disp_name, width, height)) {
+  xd = Rf_allocNewJavaGDDeviceDesc(initps);
+  if (!newJavaGD_Open((NewDevDesc*)(dd), xd, disp_name, width, height)) {
     free(xd);
     return FALSE;
   }
   
-  Rf_setNewXGDDeviceData((NewDevDesc*)(dd), 0.6, xd);
+  Rf_setNewJavaGDDeviceData((NewDevDesc*)(dd), 0.6, xd);
   
   return TRUE;
 }
 
 /**
-  This fills the general device structure (dd) with the XGD-specific
+  This fills the general device structure (dd) with the JavaGD-specific
   methods/functions. It also specifies the current values of the
   dimensions of the device, and establishes the fonts, line styles, etc.
  */
 int
-Rf_setNewXGDDeviceData(NewDevDesc *dd, double gamma_fac, newXGDDesc *xd)
+Rf_setNewJavaGDDeviceData(NewDevDesc *dd, double gamma_fac, newJavaGDDesc *xd)
 {
 #ifdef JGD_DEBUG
-	printf("Rf_setNewXGDDeviceData\n");
+	printf("Rf_setNewJavaGDDeviceData\n");
 #endif
     dd->newDevStruct = 1;
 
     /*	Set up Data Structures. */
-    setupXGDfunctions(dd);
+    setupJavaGDfunctions(dd);
 
     /* Set required graphics parameters. */
 
@@ -139,13 +139,13 @@ Rf_setNewXGDDeviceData(NewDevDesc *dd, double gamma_fac, newXGDDesc *xd)
 
 
 /**
- This allocates an newXGDDesc instance  and sets its default values.
+ This allocates an newJavaGDDesc instance  and sets its default values.
  */
-newXGDDesc * Rf_allocNewXGDDeviceDesc(double ps)
+newJavaGDDesc * Rf_allocNewJavaGDDeviceDesc(double ps)
 {
-    newXGDDesc *xd;
+    newJavaGDDesc *xd;
     /* allocate new device description */
-    if (!(xd = (newXGDDesc*)calloc(1, sizeof(newXGDDesc))))
+    if (!(xd = (newJavaGDDesc*)calloc(1, sizeof(newJavaGDDesc))))
 	return FALSE;
 
     /* From here on, if we need to bail out with "error", */
@@ -163,7 +163,7 @@ newXGDDesc * Rf_allocNewXGDDeviceDesc(double ps)
 }
 
 
-typedef Rboolean (*XGDDeviceDriverRoutine)(DevDesc*, char*, 
+typedef Rboolean (*JavaGDDeviceDriverRoutine)(DevDesc*, char*, 
 					    double, double);
 
 /*
@@ -178,7 +178,7 @@ static char *SaveString(SEXP sxp, int offset)
 } */
 
 static DevDesc* 
-Rf_addXGDDevice(char *display, double width, double height, double initps)
+Rf_addJavaGDDevice(char *display, double width, double height, double initps)
 {
     NewDevDesc *dev = NULL;
     GEDevDesc *dd;
@@ -203,7 +203,7 @@ Rf_addXGDDevice(char *display, double width, double height, double initps)
 	 * R base graphics parameters.  
 	 * This is supposed to happen via addDevice now.
 	 */
-	if (!newXGDDeviceDriver((DevDesc*)(dev), display, width, height, initps))
+	if (!newJavaGDDeviceDriver((DevDesc*)(dev), display, width, height, initps))
 	  {
 	    free(dev);
 		error("unable to start device %s", devname);
@@ -214,7 +214,7 @@ Rf_addXGDDevice(char *display, double width, double height, double initps)
 	addDevice((DevDesc*) dd);
 	GEinitDisplayList(dd);
 #ifdef JGD_DEBUG
-	printf("XGD> devNum=%d, dd=%lx\n", devNumber((DevDesc*) dd), (unsigned long)dd);
+	printf("JavaGD> devNum=%d, dd=%lx\n", devNumber((DevDesc*) dd), (unsigned long)dd);
 #endif
 #ifdef BEGIN_SUSPEND_INTERRUPTS
     } END_SUSPEND_INTERRUPTS;
@@ -223,16 +223,16 @@ Rf_addXGDDevice(char *display, double width, double height, double initps)
     return((DevDesc*) dd);
 }
 
-void resizedXGD(NewDevDesc *dd);
+void resizedJavaGD(NewDevDesc *dd);
 
-void reloadXGD(int *dn) {
+void reloadJavaGD(int *dn) {
 	GEDevDesc *gd=(GEDevDesc*)GetDevice(*dn);
 	if (gd) {
 		NewDevDesc *dd=gd->dev;
 #ifdef JGD_DEBUG
-		printf("reloadXGD: dn=%d, dd=%lx\n", *dn, (unsigned long)dd);
+		printf("reloadJavaGD: dn=%d, dd=%lx\n", *dn, (unsigned long)dd);
 #endif
-		if (dd) resizedXGD(dd);
+		if (dd) resizedJavaGD(dd);
 	}
 }
 
@@ -249,7 +249,7 @@ SEXP javaGDobjectCall(SEXP dev) {
   if (gd) {
     NewDevDesc *dd=gd->dev;
     if (dd) {
-      newXGDDesc *xd=(newXGDDesc*) dd->deviceSpecific;
+      newJavaGDDesc *xd=(newJavaGDDesc*) dd->deviceSpecific;
       if (xd) ptr = xd->talk;
     }
   }
@@ -280,9 +280,9 @@ void javaGDresize(int dev) {
     }
 }
 
-void resizedXGD(NewDevDesc *dd) {
+void resizedJavaGD(NewDevDesc *dd) {
 	int devNum;
-	/* newXGDDesc *xd = (newXGDDesc *) dd->deviceSpecific; */
+	/* newJavaGDDesc *xd = (newJavaGDDesc *) dd->deviceSpecific; */
 #ifdef JGD_DEBUG
 	printf("dd->size=%lx\n", (unsigned long)dd->size);
 #endif
@@ -293,7 +293,7 @@ void resizedXGD(NewDevDesc *dd) {
 }
 
 void newJavaGD(char **name, double *w, double *h, double *ps) {
-	Rf_addXGDDevice(*name, *w, *h, *ps);  
+	Rf_addJavaGDDevice(*name, *w, *h, *ps);  
 }
 
 void javaGDgetSize(int *dev, double *par) {
@@ -305,7 +305,7 @@ void javaGDgetSize(int *dev, double *par) {
             NewDevDesc *dd=gd->dev;
             /*
              if (dd) {
-                 newXGDDesc *xd=(newXGDDesc*) dd->deviceSpecific;
+                 newJavaGDDesc *xd=(newJavaGDDesc*) dd->deviceSpecific;
                  if (xd) *obj=(int) xd->talk;
              }
              */

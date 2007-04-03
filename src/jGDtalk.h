@@ -7,9 +7,9 @@
 
 #include "javaGD.h"
 
-extern void setupXGDfunctions(NewDevDesc *dd);
+extern void setupJavaGDfunctions(NewDevDesc *dd);
 
-Rboolean newXGD_Open(NewDevDesc *dd, newXGDDesc *xd,  char *dsp, double w, double h);
+Rboolean newJavaGD_Open(NewDevDesc *dd, newJavaGDDesc *xd,  char *dsp, double w, double h);
 
 
 #endif

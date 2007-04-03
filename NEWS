@@ -1,6 +1,13 @@
  NEWS/Changelog for JavaGD
 ---------------------------
 
+0.4-0	(under development)
+    o	use rJava to load Java classes if native version fails
+
+    o	minor memory leak fixes and cleanups
+
+    o	rename functions to avoid conflicts with JavaGD
+
 0.3-6	2007-03-06
     o	Text using symbols (fontface=5) is re-coded to unicode in
 	UTF-8 encoding before it's passed to Java. The back-end now

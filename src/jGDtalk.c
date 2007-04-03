@@ -3,7 +3,7 @@
 #include <Rversion.h>
 #include <Rdefines.h>
 
-int initJavaGD(newXGDDesc* xd);
+int initJavaGD(newJavaGDDesc* xd);
 
 char *symbol2utf8(const char *c); /* from s2u.c */
 
@@ -28,43 +28,43 @@ char *symbol2utf8(const char *c); /* from s2u.c */
 #define CONVERT_COLOR(C) (C)
 #endif
 
-static void newXGD_Activate(NewDevDesc *dd);
-static void newXGD_Circle(double x, double y, double r,
+static void newJavaGD_Activate(NewDevDesc *dd);
+static void newJavaGD_Circle(double x, double y, double r,
 			  R_GE_gcontext *gc,
 			  NewDevDesc *dd);
-static void newXGD_Clip(double x0, double x1, double y0, double y1,
+static void newJavaGD_Clip(double x0, double x1, double y0, double y1,
 			NewDevDesc *dd);
-static void newXGD_Close(NewDevDesc *dd);
-static void newXGD_Deactivate(NewDevDesc *dd);
-static void newXGD_Hold(NewDevDesc *dd);
-static Rboolean newXGD_Locator(double *x, double *y, NewDevDesc *dd);
-static void newXGD_Line(double x1, double y1, double x2, double y2,
+static void newJavaGD_Close(NewDevDesc *dd);
+static void newJavaGD_Deactivate(NewDevDesc *dd);
+static void newJavaGD_Hold(NewDevDesc *dd);
+static Rboolean newJavaGD_Locator(double *x, double *y, NewDevDesc *dd);
+static void newJavaGD_Line(double x1, double y1, double x2, double y2,
 			R_GE_gcontext *gc,
 			NewDevDesc *dd);
-static void newXGD_MetricInfo(int c, 
+static void newJavaGD_MetricInfo(int c, 
 			      R_GE_gcontext *gc,
 			      double* ascent, double* descent,
 			      double* width, NewDevDesc *dd);
-static void newXGD_Mode(int mode, NewDevDesc *dd);
-static void newXGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd);
-Rboolean newXGD_Open(NewDevDesc *dd, newXGDDesc *xd,
+static void newJavaGD_Mode(int mode, NewDevDesc *dd);
+static void newJavaGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd);
+Rboolean newJavaGD_Open(NewDevDesc *dd, newJavaGDDesc *xd,
 		     char *dsp, double w, double h);
-static void newXGD_Polygon(int n, double *x, double *y,
+static void newJavaGD_Polygon(int n, double *x, double *y,
 			   R_GE_gcontext *gc,
 			   NewDevDesc *dd);
-static void newXGD_Polyline(int n, double *x, double *y,
+static void newJavaGD_Polyline(int n, double *x, double *y,
 			     R_GE_gcontext *gc,
 			     NewDevDesc *dd);
-static void newXGD_Rect(double x0, double y0, double x1, double y1,
+static void newJavaGD_Rect(double x0, double y0, double x1, double y1,
 			 R_GE_gcontext *gc,
 			 NewDevDesc *dd);
-static void newXGD_Size(double *left, double *right,
+static void newJavaGD_Size(double *left, double *right,
 			 double *bottom, double *top,
 			 NewDevDesc *dd);
-static double newXGD_StrWidth(char *str, 
+static double newJavaGD_StrWidth(char *str, 
 			       R_GE_gcontext *gc,
 			       NewDevDesc *dd);
-static void newXGD_Text(double x, double y, char *str,
+static void newJavaGD_Text(double x, double y, char *str,
 			 double rot, double hadj,
 			 R_GE_gcontext *gc,
 			 NewDevDesc *dd);
@@ -115,7 +115,7 @@ static JNIEnv *getJNIEnv() {
 #define checkGC(e,xd,gc) sendGC(e,xd,gc,0)
 
 /** check changes in GC and issue corresponding commands if necessary */
-static void sendGC(JNIEnv *env, newXGDDesc *xd, R_GE_gcontext *gc, int sendAll) {
+static void sendGC(JNIEnv *env, newJavaGDDesc *xd, R_GE_gcontext *gc, int sendAll) {
     jmethodID mid;
     
     if (sendAll || gc->col != lastGC.col) {
@@ -150,7 +150,7 @@ static void sendGC(JNIEnv *env, newXGDDesc *xd, R_GE_gcontext *gc, int sendAll) 
 }
 
 /* re-set the GC - i.e. send commands for all monitored GC entries */
-static void sendAllGC(JNIEnv *env, newXGDDesc *xd, R_GE_gcontext *gc) {
+static void sendAllGC(JNIEnv *env, newJavaGDDesc *xd, R_GE_gcontext *gc) {
     /*
     printf("Basic GC:\n col=%08x\n fill=%08x\n gamma=%f\n lwd=%f\n lty=%08x\n cex=%f\n ps=%f\n lineheight=%f\n fontface=%d\n fantfamily=\"%s\"\n\n",
 	 gc->col, gc->fill, gc->gamma, gc->lwd, gc->lty,
@@ -161,9 +161,9 @@ static void sendAllGC(JNIEnv *env, newXGDDesc *xd, R_GE_gcontext *gc) {
 
 /*------- the R callbacks begin here ... ------------------------*/
 
-static void newXGD_Activate(NewDevDesc *dd)
+static void newJavaGD_Activate(NewDevDesc *dd)
 {
-    newXGDDesc *xd = (newXGDDesc *) dd->deviceSpecific;
+    newJavaGDDesc *xd = (newJavaGDDesc *) dd->deviceSpecific;
     JNIEnv *env = getJNIEnv();
     jmethodID mid;
     
@@ -174,9 +174,9 @@ static void newXGD_Activate(NewDevDesc *dd)
 	chkX(env);
 }
 
-static void newXGD_Circle(double x, double y, double r,  R_GE_gcontext *gc,  NewDevDesc *dd)
+static void newJavaGD_Circle(double x, double y, double r,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
-    newXGDDesc *xd = (newXGDDesc *) dd->deviceSpecific;
+    newJavaGDDesc *xd = (newJavaGDDesc *) dd->deviceSpecific;
     JNIEnv *env = getJNIEnv();
     jmethodID mid;
     
@@ -189,9 +189,9 @@ static void newXGD_Circle(double x, double y, double r,  R_GE_gcontext *gc,  New
 	chkX(env);
 }
 
-static void newXGD_Clip(double x0, double x1, double y0, double y1,  NewDevDesc *dd)
+static void newJavaGD_Clip(double x0, double x1, double y0, double y1,  NewDevDesc *dd)
 {
-    newXGDDesc *xd = (newXGDDesc *) dd->deviceSpecific;
+    newJavaGDDesc *xd = (newJavaGDDesc *) dd->deviceSpecific;
     JNIEnv *env = getJNIEnv();
     jmethodID mid;
     
@@ -202,9 +202,9 @@ static void newXGD_Clip(double x0, double x1, double y0, double y1,  NewDevDesc 
 	chkX(env);
 }
 
-static void newXGD_Close(NewDevDesc *dd)
+static void newJavaGD_Close(NewDevDesc *dd)
 {
-    newXGDDesc *xd = (newXGDDesc *) dd->deviceSpecific;
+    newJavaGDDesc *xd = (newJavaGDDesc *) dd->deviceSpecific;
     JNIEnv *env = getJNIEnv();
     jmethodID mid;
     
@@ -215,9 +215,9 @@ static void newXGD_Close(NewDevDesc *dd)
 	chkX(env);
 }
 
-static void newXGD_Deactivate(NewDevDesc *dd)
+static void newJavaGD_Deactivate(NewDevDesc *dd)
 {
-    newXGDDesc *xd = (newXGDDesc *) dd->deviceSpecific;
+    newJavaGDDesc *xd = (newJavaGDDesc *) dd->deviceSpecific;
     JNIEnv *env = getJNIEnv();
     jmethodID mid;
     
@@ -228,9 +228,9 @@ static void newXGD_Deactivate(NewDevDesc *dd)
 	chkX(env);
 }
 
-static void newXGD_Hold(NewDevDesc *dd)
+static void newJavaGD_Hold(NewDevDesc *dd)
 {
-    newXGDDesc *xd = (newXGDDesc *) dd->deviceSpecific;
+    newJavaGDDesc *xd = (newJavaGDDesc *) dd->deviceSpecific;
     JNIEnv *env = getJNIEnv();
     jmethodID mid;
     
@@ -241,9 +241,9 @@ static void newXGD_Hold(NewDevDesc *dd)
 	chkX(env);
 }
 
-static Rboolean newXGD_Locator(double *x, double *y, NewDevDesc *dd)
+static Rboolean newJavaGD_Locator(double *x, double *y, NewDevDesc *dd)
 {
-    newXGDDesc *xd = (newXGDDesc *) dd->deviceSpecific;
+    newJavaGDDesc *xd = (newJavaGDDesc *) dd->deviceSpecific;
     JNIEnv *env = getJNIEnv();
     jmethodID mid;
     
@@ -270,9 +270,9 @@ static Rboolean newXGD_Locator(double *x, double *y, NewDevDesc *dd)
     return FALSE;
 }
 
-static void newXGD_Line(double x1, double y1, double x2, double y2,  R_GE_gcontext *gc,  NewDevDesc *dd)
+static void newJavaGD_Line(double x1, double y1, double x2, double y2,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
-    newXGDDesc *xd = (newXGDDesc *) dd->deviceSpecific;
+    newJavaGDDesc *xd = (newJavaGDDesc *) dd->deviceSpecific;
     JNIEnv *env = getJNIEnv();
     jmethodID mid;
     
@@ -285,9 +285,9 @@ static void newXGD_Line(double x1, double y1, double x2, double y2,  R_GE_gconte
 	chkX(env);
 }
 
-static void newXGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, double* descent,  double* width, NewDevDesc *dd)
+static void newJavaGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, double* descent,  double* width, NewDevDesc *dd)
 {
-    newXGDDesc *xd = (newXGDDesc *) dd->deviceSpecific;
+    newJavaGDDesc *xd = (newJavaGDDesc *) dd->deviceSpecific;
     JNIEnv *env = getJNIEnv();
     jmethodID mid;
     
@@ -312,9 +312,9 @@ static void newXGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, double
 	chkX(env);
 }
 
-static void newXGD_Mode(int mode, NewDevDesc *dd)
+static void newJavaGD_Mode(int mode, NewDevDesc *dd)
 {
-    newXGDDesc *xd = (newXGDDesc *) dd->deviceSpecific;
+    newJavaGDDesc *xd = (newJavaGDDesc *) dd->deviceSpecific;
     JNIEnv *env = getJNIEnv();
     jmethodID mid;
     
@@ -325,9 +325,9 @@ static void newXGD_Mode(int mode, NewDevDesc *dd)
 	chkX(env);
 }
 
-static void newXGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
+static void newJavaGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
 {
-    newXGDDesc *xd = (newXGDDesc *) dd->deviceSpecific;
+    newJavaGDDesc *xd = (newJavaGDDesc *) dd->deviceSpecific;
     JNIEnv *env = getJNIEnv();
     jmethodID mid;
     int devNr;
@@ -344,7 +344,7 @@ static void newXGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
     sendAllGC(env, xd, gc);
 }
 
-Rboolean newXGD_Open(NewDevDesc *dd, newXGDDesc *xd,  char *dsp, double w, double h)
+Rboolean newJavaGD_Open(NewDevDesc *dd, newJavaGDDesc *xd,  char *dsp, double w, double h)
 {   
     if (initJavaGD(xd)) return FALSE;
     
@@ -398,9 +398,9 @@ static jarray newDoubleArray(JNIEnv *env, int n, double *ct)
     return da;
 }
 
-static void newXGD_Polygon(int n, double *x, double *y,  R_GE_gcontext *gc,  NewDevDesc *dd)
+static void newJavaGD_Polygon(int n, double *x, double *y,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
-    newXGDDesc *xd = (newXGDDesc *) dd->deviceSpecific;
+    newJavaGDDesc *xd = (newJavaGDDesc *) dd->deviceSpecific;
     JNIEnv *env = getJNIEnv();
     jmethodID mid;
     jarray xa, ya;
@@ -421,9 +421,9 @@ static void newXGD_Polygon(int n, double *x, double *y,  R_GE_gcontext *gc,  New
 	chkX(env);
 }
 
-static void newXGD_Polyline(int n, double *x, double *y,  R_GE_gcontext *gc,  NewDevDesc *dd)
+static void newJavaGD_Polyline(int n, double *x, double *y,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
-    newXGDDesc *xd = (newXGDDesc *) dd->deviceSpecific;
+    newJavaGDDesc *xd = (newJavaGDDesc *) dd->deviceSpecific;
     JNIEnv *env = getJNIEnv();
     jmethodID mid;
     jarray xa, ya;
@@ -445,9 +445,9 @@ static void newXGD_Polyline(int n, double *x, double *y,  R_GE_gcontext *gc,  Ne
 	chkX(env);
 }
 
-static void newXGD_Rect(double x0, double y0, double x1, double y1,  R_GE_gcontext *gc,  NewDevDesc *dd)
+static void newJavaGD_Rect(double x0, double y0, double x1, double y1,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
-    newXGDDesc *xd = (newXGDDesc *) dd->deviceSpecific;
+    newJavaGDDesc *xd = (newJavaGDDesc *) dd->deviceSpecific;
     JNIEnv *env = getJNIEnv();
     jmethodID mid;
     
@@ -461,9 +461,9 @@ static void newXGD_Rect(double x0, double y0, double x1, double y1,  R_GE_gconte
 	chkX(env);
 }
 
-static void newXGD_Size(double *left, double *right,  double *bottom, double *top,  NewDevDesc *dd)
+static void newJavaGD_Size(double *left, double *right,  double *bottom, double *top,  NewDevDesc *dd)
 {
-    newXGDDesc *xd = (newXGDDesc *) dd->deviceSpecific;
+    newJavaGDDesc *xd = (newJavaGDDesc *) dd->deviceSpecific;
     JNIEnv *env = getJNIEnv();
     jmethodID mid;
     
@@ -488,9 +488,9 @@ static void newXGD_Size(double *left, double *right,  double *bottom, double *to
 	chkX(env);
 }
 
-static double newXGD_StrWidth(char *str,  R_GE_gcontext *gc,  NewDevDesc *dd)
+static double newJavaGD_StrWidth(char *str,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
-    newXGDDesc *xd = (newXGDDesc *) dd->deviceSpecific;
+    newJavaGDDesc *xd = (newJavaGDDesc *) dd->deviceSpecific;
     JNIEnv *env = getJNIEnv();
     jmethodID mid;
     jstring s;
@@ -507,9 +507,9 @@ static double newXGD_StrWidth(char *str,  R_GE_gcontext *gc,  NewDevDesc *dd)
     return 0.0;
 }
 
-static void newXGD_Text(double x, double y, char *str,  double rot, double hadj,  R_GE_gcontext *gc,  NewDevDesc *dd)
+static void newJavaGD_Text(double x, double y, char *str,  double rot, double hadj,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
-    newXGDDesc *xd = (newXGDDesc *) dd->deviceSpecific;
+    newJavaGDDesc *xd = (newJavaGDDesc *) dd->deviceSpecific;
     JNIEnv *env = getJNIEnv();
     jmethodID mid;
     jstring s;
@@ -531,25 +531,25 @@ static void newXGD_Text(double x, double y, char *str,  double rot, double hadj,
 /*-----------------------------------------------------------------------*/
 
 /** fill the R device structure with callback functions */
-void setupXGDfunctions(NewDevDesc *dd) {
-    dd->open = newXGD_Open;
-    dd->close = newXGD_Close;
-    dd->activate = newXGD_Activate;
-    dd->deactivate = newXGD_Deactivate;
-    dd->size = newXGD_Size;
-    dd->newPage = newXGD_NewPage;
-    dd->clip = newXGD_Clip;
-    dd->strWidth = newXGD_StrWidth;
-    dd->text = newXGD_Text;
-    dd->rect = newXGD_Rect;
-    dd->circle = newXGD_Circle;
-    dd->line = newXGD_Line;
-    dd->polyline = newXGD_Polyline;
-    dd->polygon = newXGD_Polygon;
-    dd->locator = newXGD_Locator;
-    dd->mode = newXGD_Mode;
-    dd->hold = newXGD_Hold;
-    dd->metricInfo = newXGD_MetricInfo;
+void setupJavaGDfunctions(NewDevDesc *dd) {
+    dd->open = newJavaGD_Open;
+    dd->close = newJavaGD_Close;
+    dd->activate = newJavaGD_Activate;
+    dd->deactivate = newJavaGD_Deactivate;
+    dd->size = newJavaGD_Size;
+    dd->newPage = newJavaGD_NewPage;
+    dd->clip = newJavaGD_Clip;
+    dd->strWidth = newJavaGD_StrWidth;
+    dd->text = newJavaGD_Text;
+    dd->rect = newJavaGD_Rect;
+    dd->circle = newJavaGD_Circle;
+    dd->line = newJavaGD_Line;
+    dd->polyline = newJavaGD_Polyline;
+    dd->polygon = newJavaGD_Polygon;
+    dd->locator = newJavaGD_Locator;
+    dd->mode = newJavaGD_Mode;
+    dd->hold = newJavaGD_Hold;
+    dd->metricInfo = newJavaGD_MetricInfo;
 }
 
 /*--------- Java Initialization -----------*/
@@ -618,7 +618,7 @@ void getJavaGDClassPath(char **cp) {
     *cp=jarClassPath;
 }
 
-int initJavaGD(newXGDDesc* xd) {
+int initJavaGD(newJavaGDDesc* xd) {
     JNIEnv *env=getJNIEnv();
 
     if (!jvm) {
