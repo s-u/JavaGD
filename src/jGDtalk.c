@@ -1,6 +1,7 @@
 #include "javaGD.h"
 #include "jGDtalk.h"
 #include <Rversion.h>
+#include <Rdefines.h>
 
 int initJavaGD(newXGDDesc* xd);
 
@@ -253,10 +254,14 @@ static Rboolean newXGD_Locator(double *x, double *y, NewDevDesc *dd)
         jobject o=(*env)->CallObjectMethod(env, xd->talk, mid);
         if (o) {
             jdouble *ac=(jdouble*)(*env)->GetDoubleArrayElements(env, o, 0);
-            if (!ac) return FALSE;
+            if (!ac) {
+	      (*env)->DeleteLocalRef(env, o);
+	      return FALSE;
+	    }
             *x=ac[0]; *y=ac[1];
             (*env)->ReleaseDoubleArrayElements(env, o, ac, 0);
-			chkX(env);
+	    (*env)->DeleteLocalRef(env, o);
+	    chkX(env);
             return TRUE;
         }        
     }
@@ -295,8 +300,12 @@ static void newXGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, double
         jobject o=(*env)->CallObjectMethod(env, xd->talk, mid, c);
         if (o) {
             jdouble *ac=(jdouble*)(*env)->GetDoubleArrayElements(env, o, 0);
-            if (!ac) return;
+            if (!ac) {
+	      (*env)->DeleteLocalRef(env, o);
+	      return;
+	    }
             *ascent=ac[0]; *descent=ac[1]; *width=ac[2];
+	    (*env)->DeleteLocalRef(env, o);
             (*env)->ReleaseDoubleArrayElements(env, o, ac, 0);
         }        
     }
@@ -465,9 +474,14 @@ static void newXGD_Size(double *left, double *right,  double *bottom, double *to
         jobject o=(*env)->CallObjectMethod(env, xd->talk, mid);
         if (o) {
             jdouble *ac=(jdouble*)(*env)->GetDoubleArrayElements(env, o, 0);
-            if (!ac) { gdWarning("gdSize: cant's get double*"); return; }
+            if (!ac) {
+	      (*env)->DeleteLocalRef(env, o);
+	      gdWarning("gdSize: cant's get double*");
+	      return;
+	    }
             *left=ac[0]; *right=ac[1]; *bottom=ac[2]; *top=ac[3];
             (*env)->ReleaseDoubleArrayElements(env, o, ac, 0);
+	    (*env)->DeleteLocalRef(env, o);
         } else gdWarning("gdSize: gdSize returned null");
     }
     else gdWarning("gdSize: can't get mid ");
@@ -615,29 +629,44 @@ int initJavaGD(newXGDDesc* xd) {
     if (!env) return -1;
     
     {
-        jobject o;
-        jmethodID mid;
-        jclass c=0;
-        char *customClass=getenv("JAVAGD_CLASS_NAME");
-        if (customClass) c=(*env)->FindClass(env, customClass);
-        if (!c) c=(*env)->FindClass(env, "org/rosuda/javaGD/JavaGD");
-        if (!c) c=(*env)->FindClass(env, "JavaGD");
-        if (!c) { gdWarning("initJavaGD: can't find JavaGD class"); return -2; };
-        
-        mid=(*env)->GetMethodID(env, c, "<init>", "()V");
+      jobject o = 0;
+      int releaseO = 1;
+      jmethodID mid;
+      jclass c=0;
+      char *customClass=getenv("JAVAGD_CLASS_NAME");
+      if (customClass) { c=(*env)->FindClass(env, customClass); chkX(env); }
+      if (!c) { c=(*env)->FindClass(env, "org/rosuda/javaGD/JavaGD"); chkX(env); }
+      if (!c) { c=(*env)->FindClass(env, "JavaGD"); chkX(env); }
+      if (!c) {
+	/* use rJava to instantiate the JavaGD class */
+	SEXP cl;
+	if (!customClass || !*customClass) customClass="org/rosuda/javaGD/JavaGD";
+	cl = eval(LCONS(install(".jnew"),LCONS(mkString(customClass),R_NilValue)), R_GlobalEnv);
+	chkX(env);
+	if (cl != R_NilValue && inherits(cl, "jobjRef")) {
+	  o = (jobject) R_ExternalPtrAddr(GET_SLOT(cl, install("jobj")));
+	  releaseO = 0;
+	  c = (*env)->GetObjectClass(env, o);
+	}
+      }
+      if (!c && !o) error("Cannot find JavaGD class.");
+      if (!o) {
+	mid=(*env)->GetMethodID(env, c, "<init>", "()V");
         if (!mid) {
             (*env)->DeleteLocalRef(env, c);  
-            gdWarning("initJavaGD: can't get mid for JavaGD constructor");
-            return -3;
+            error("Cannot find default JavaGD contructor.");
         }
         o=(*env)->NewObject(env, c, mid);
         if (!o) {
-            (*env)->DeleteLocalRef(env, c);  
-            gdWarning("initJavaGD: can't instantiate JavaGD");
-            return -4;
+	  (*env)->DeleteLocalRef(env, c);  
+	  error("Connot instantiate JavaGD object.");
         }
-        xd->talk = (*env)->NewGlobalRef(env, o);
-        xd->talkClass = (*env)->NewGlobalRef(env, c);
+      }
+
+      xd->talk = (*env)->NewGlobalRef(env, o);
+      xd->talkClass = (*env)->NewGlobalRef(env, c);
+      (*env)->DeleteLocalRef(env, c);
+      if (releaseO) (*env)->DeleteLocalRef(env, o);
     }
     
     return 0;
