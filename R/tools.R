@@ -25,7 +25,7 @@
 }
 
 .javaGD.set.class.path <- function(cp) {
-  if (length(cp)<1) error("Invalid class path")
+  if (length(cp)<1) stop("Invalid class path")
   invisible(.C("setJavaGDClassPath",as.character(cp),PACKAGE="JavaGD"))
 }
 
