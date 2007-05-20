@@ -305,8 +305,8 @@ static void newJavaGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, dou
 	      return;
 	    }
             *ascent=ac[0]; *descent=ac[1]; *width=ac[2];
-	    (*env)->DeleteLocalRef(env, o);
             (*env)->ReleaseDoubleArrayElements(env, o, ac, 0);
+	    (*env)->DeleteLocalRef(env, o);
         }        
     }
 	chkX(env);
