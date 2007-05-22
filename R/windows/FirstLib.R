@@ -1,6 +1,7 @@
 .First.lib <-
 function(libname, pkgname) {
     javahome <- Sys.getenv("JAVA_HOME")
+    .putenv <- if (exists("Sys.setenv")) Sys.setenv else Sys.putenv
     if(!nchar(javahome)) {
 	# let's try to fetch the paths from registry via WinRegistry.dll
 	javahome <- NULL
@@ -26,7 +27,7 @@ function(libname, pkgname) {
 		    # then we won't find the DLL either.
 		    # Note that we just add it to the PATH so if this fails
 		    # we still fall back to the JavaHome entry.
-		    Sys.putenv(PATH=paste(Sys.getenv("PATH"),
+		    .putenv(PATH=paste(Sys.getenv("PATH"),
 					  substr(p,1,nchar(p)-8),sep=";"))
 		}
 	    }
@@ -36,7 +37,7 @@ function(libname, pkgname) {
     }
     if(!nchar(javahome)) stop("JAVA_HOME is not set")
 #    else cat("using JAVA_HOME =", javahome, "\n")
-    Sys.putenv(PATH=paste(Sys.getenv("PATH"),
+    .putenv(PATH=paste(Sys.getenv("PATH"),
                file.path(javahome, "bin", "client"), sep=";"))
     .javaGD.jar.file<-paste(libname,pkgname,"java","javaGD.jar",sep=.Platform$file.sep)
     library.dynam("JavaGD", pkgname, libname)
