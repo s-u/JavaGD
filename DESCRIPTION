@@ -10,4 +10,4 @@ Description: Graphics device routing all graphics commands to a Java
 	     on the Java-side implementation. Simple AWT and Swing
 	     implementations are included.
 License: GPL version 2 or newer
-URL: http://www.rosuda.org/R/JavaGD/
+URL: http://www.rforge.net/JavaGD/

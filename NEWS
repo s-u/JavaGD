@@ -1,6 +1,8 @@
  NEWS/Changelog for JavaGD
 ---------------------------
 
+0.4-3	(under development)
+
 0.4-2	2007-05-21
     o	fix a memory handling bug in MetricInfo
 
