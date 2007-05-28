@@ -19,6 +19,10 @@ else
     autoreconf
     rm -rf autom4te*
 fi
+if [ ! -e configure ]; then
+    echo "*** ERROR: unable to create configure"
+    exit 1
+fi
 
 if [ ! -e getsp.class ]; then
     echo "Compiling getsp.class"
@@ -26,8 +30,7 @@ if [ ! -e getsp.class ]; then
 fi
 
 echo "Removing SVN/CVS and backup stuff ..."
-find . -name CVS -or -name .svn | xargs rm -rf
-find . -name \*~ | xargs rm -f
+rm -rf `find . -name CVS -or -name .svn -or -name \*~`
 
 if [ ! -e src/java/javaGD.jar ]; then
     echo "Compiling javaGD Java sources"
@@ -59,10 +62,9 @@ if [ ! -e src/java/javaGD.jar ]; then
 fi
 
 echo "Updating version ..."
-VER=`awk -v ORS= '/JavaGD v/ { print substr($6,2) }' src/javaGD.h`
+VER=`sed -n -e 's/.*JavaGD v\([0-9.-]\{1,\}\).*/\1/p' src/javaGD.h`
 echo "JavaGD version ${VER}"
-cat DESCRIPTION| sed "s/Version:.*/Version: ${VER}/" > d
-mv d DESCRIPTION
+cat DESCRIPTION| sed "s/Version:.*/Version: ${VER}/" > d && mv d DESCRIPTION
 echo "Creating package ..."
 cd ..
 tar fcz ${PNAME}_${VER}.tar.gz ${PNAME}
