@@ -1,7 +1,7 @@
 #ifndef _DEV_JAVAGD_H
 #define _DEV_JAVAGD_H
 
-#define JAVAGD_VER 0x000403 /* JavaGD v0.4-3 */
+#define JAVAGD_VER 0x000500 /* JavaGD v0.5-0 */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -11,11 +11,21 @@
 #include <Rinternals.h>
 #include <R_ext/GraphicsDevice.h>
 #include <R_ext/GraphicsEngine.h>
-#include <Rgraphics.h>
-#include <Rdevices.h>
 #include <jni.h>
 
-Rboolean newJavaGDDeviceDriver(DevDesc*, char*, double, double, double);
+/* for compatibility with older R versions */ 
+#if R_GE_version < 4
+#include <Rgraphics.h>
+#include <Rdevices.h>
+#define GEaddDevice(X) addDevice((DevDesc*)(X))
+#define GEdeviceNumber(X) devNumber((DevDesc*)(X))
+#define GEgetDevice(X) ((GEDevDesc*) GetDevice(X))
+#define ndevNumber(X) devNumber((DevDesc*)(X))
+#define GEkillDevice(X) KillDevice(X)
+#define desc2GEDesc(X) ((DevDesc*) GetDevice(devNumber((DevDesc*) (X))))
+#endif
+
+Rboolean newJavaGDDeviceDriver(NewDevDesc*, char*, double, double, double);
 
 /********************************************************/
 /* Each driver can have its own device-specic graphical */

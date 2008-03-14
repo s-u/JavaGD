@@ -45,7 +45,7 @@ double jGDasp  = 1.0;
 /*	4) host to connect to		*/
 /*	5) tcp port to connect to	*/
 
-Rboolean newJavaGDDeviceDriver(DevDesc *dd,
+Rboolean newJavaGDDeviceDriver(NewDevDesc *dd,
 			    char *disp_name,
 			    double width,
 			    double height,
@@ -79,7 +79,6 @@ Rf_setNewJavaGDDeviceData(NewDevDesc *dd, double gamma_fac, newJavaGDDesc *xd)
 #ifdef JGD_DEBUG
 	printf("Rf_setNewJavaGDDeviceData\n");
 #endif
-    dd->newDevStruct = 1;
 
     /*	Set up Data Structures. */
     setupJavaGDfunctions(dd);
@@ -163,8 +162,8 @@ newJavaGDDesc * Rf_allocNewJavaGDDeviceDesc(double ps)
 }
 
 
-typedef Rboolean (*JavaGDDeviceDriverRoutine)(DevDesc*, char*, 
-					    double, double);
+typedef Rboolean (*JavaGDDeviceDriverRoutine)(NewDevDesc*, char*, 
+					      double, double);
 
 /*
 static char *SaveString(SEXP sxp, int offset)
@@ -177,7 +176,7 @@ static char *SaveString(SEXP sxp, int offset)
     return s;
 } */
 
-static DevDesc* 
+static GEDevDesc* 
 Rf_addJavaGDDevice(char *display, double width, double height, double initps)
 {
     NewDevDesc *dev = NULL;
@@ -193,8 +192,10 @@ Rf_addJavaGDDevice(char *display, double width, double height, double initps)
 	if (!(dev = (NewDevDesc*)calloc(1, sizeof(NewDevDesc))))
 	    return 0;
 	/* Do this for early redraw attempts */
-	dev->newDevStruct = 1;
 	dev->displayList = R_NilValue;
+#if R_GE_version < 4
+	dev->newDevStruct = 1;
+#endif
 	/* Make sure that this is initialised before a GC can occur.
 	 * This (and displayList) get protected during GC
 	 */
@@ -203,7 +204,7 @@ Rf_addJavaGDDevice(char *display, double width, double height, double initps)
 	 * R base graphics parameters.  
 	 * This is supposed to happen via addDevice now.
 	 */
-	if (!newJavaGDDeviceDriver((DevDesc*)(dev), display, width, height, initps))
+	if (!newJavaGDDeviceDriver(dev, display, width, height, initps))
 	  {
 	    free(dev);
 		error("unable to start device %s", devname);
@@ -211,22 +212,22 @@ Rf_addJavaGDDevice(char *display, double width, double height, double initps)
 	  }
 	gsetVar(install(".Device"), mkString(devname), R_NilValue);
 	dd = GEcreateDevDesc(dev);
-	addDevice((DevDesc*) dd);
+	GEaddDevice(dd);
 	GEinitDisplayList(dd);
 #ifdef JGD_DEBUG
-	printf("JavaGD> devNum=%d, dd=%lx\n", devNumber((DevDesc*) dd), (unsigned long)dd);
+	printf("JavaGD> devNum=%d, dd=%lx\n", ndevNumber(dd), (unsigned long)dd);
 #endif
 #ifdef BEGIN_SUSPEND_INTERRUPTS
     } END_SUSPEND_INTERRUPTS;
 #endif
     
-    return((DevDesc*) dd);
+    return(dd);
 }
 
 void resizedJavaGD(NewDevDesc *dd);
 
 void reloadJavaGD(int *dn) {
-	GEDevDesc *gd=(GEDevDesc*)GetDevice(*dn);
+	GEDevDesc *gd= GEgetDevice(*dn);
 	if (gd) {
 		NewDevDesc *dd=gd->dev;
 #ifdef JGD_DEBUG
@@ -245,7 +246,7 @@ SEXP javaGDobjectCall(SEXP dev) {
   if (!isInteger(dev) || LENGTH(dev)<1) return R_NilValue;
   dn = INTEGER(dev)[0];
   if (dn<0 || dn>=ds) return R_NilValue;
-  gd=(GEDevDesc*)GetDevice(dn);
+  gd=GEgetDevice(dn);
   if (gd) {
     NewDevDesc *dd=gd->dev;
     if (dd) {
@@ -262,7 +263,7 @@ void javaGDresize(int dev) {
     int i=0;
     if (dev>=0 && dev<ds) { i=dev; ds=dev+1; }
     while (i<ds) {
-        GEDevDesc *gd=(GEDevDesc*)GetDevice(i);
+        GEDevDesc *gd=GEgetDevice(i);
         if (gd) {
             NewDevDesc *dd=gd->dev;
 #ifdef JGD_DEBUG
@@ -287,9 +288,9 @@ void resizedJavaGD(NewDevDesc *dd) {
 	printf("dd->size=%lx\n", (unsigned long)dd->size);
 #endif
 	dd->size(&(dd->left), &(dd->right), &(dd->bottom), &(dd->top), dd);
-	devNum = devNumber((DevDesc*) dd);
+	devNum = ndevNumber(dd);
 	if (devNum > 0)
-		GEplayDisplayList((GEDevDesc*) GetDevice(devNum));
+		GEplayDisplayList(GEgetDevice(devNum));
 }
 
 void newJavaGD(char **name, double *w, double *h, double *ps) {
@@ -300,7 +301,7 @@ void javaGDgetSize(int *dev, double *par) {
     int ds=NumDevices();
     if (*dev<0 || *dev>=ds) return;
     {
-        GEDevDesc *gd=(GEDevDesc*)GetDevice(*dev);
+        GEDevDesc *gd=GEgetDevice(*dev);
         if (gd) {
             NewDevDesc *dd=gd->dev;
             /*

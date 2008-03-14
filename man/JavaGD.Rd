@@ -21,8 +21,6 @@ JavaGD(name="JavaGD", width=400, height=300, ps=12)
   Currently the return value is implementation dependent, mostly just
   the return code as returned by the low-level C function
 }
-\seealso{
-}
 \examples{
 \dontrun{
 JavaGD()

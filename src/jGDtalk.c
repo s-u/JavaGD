@@ -233,12 +233,12 @@ static void newJavaGD_Hold(NewDevDesc *dd)
     newJavaGDDesc *xd = (newJavaGDDesc *) dd->deviceSpecific;
     JNIEnv *env = getJNIEnv();
     jmethodID mid;
-    
+
     if(!env || !xd || !xd->talk) return;
-    
+
     mid = (*env)->GetMethodID(env, xd->talkClass, "gdHold", "()V");
     if (mid) (*env)->CallVoidMethod(env, xd->talk, mid);
-	chkX(env);
+    chkX(env);
 }
 
 static Rboolean newJavaGD_Locator(double *x, double *y, NewDevDesc *dd)
@@ -295,6 +295,7 @@ static void newJavaGD_MetricInfo(int c,  R_GE_gcontext *gc,  double* ascent, dou
     
     checkGC(env,xd, gc);
     
+    if(c <0) c = -c;
     mid = (*env)->GetMethodID(env, xd->talkClass, "gdMetricInfo", "(I)[D");
     if (mid) {
         jobject o=(*env)->CallObjectMethod(env, xd->talk, mid, c);
@@ -334,7 +335,7 @@ static void newJavaGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
     
     if(!env || !xd || !xd->talk) return;
     
-    devNr = devNumber((DevDesc*) dd);
+    devNr = ndevNumber(dd);
 
     mid = (*env)->GetMethodID(env, xd->talkClass, "gdNewPage", "(I)V");
     if (mid) (*env)->CallVoidMethod(env, xd->talk, mid, devNr);
@@ -499,6 +500,8 @@ static double newJavaGD_StrWidth(char *str,  R_GE_gcontext *gc,  NewDevDesc *dd)
     
     checkGC(env,xd, gc);
     
+    if (gc->fontface==5) /* symbol font needs re-coding to UTF-8 */
+      str = symbol2utf8(str);
     s = (*env)->NewStringUTF(env, str);
     mid = (*env)->GetMethodID(env, xd->talkClass, "gdStrWidth", "(Ljava/lang/String;)D");
     if (mid) return (*env)->CallDoubleMethod(env, xd->talk, mid, s);
@@ -532,7 +535,6 @@ static void newJavaGD_Text(double x, double y, char *str,  double rot, double ha
 
 /** fill the R device structure with callback functions */
 void setupJavaGDfunctions(NewDevDesc *dd) {
-    dd->open = newJavaGD_Open;
     dd->close = newJavaGD_Close;
     dd->activate = newJavaGD_Activate;
     dd->deactivate = newJavaGD_Deactivate;
@@ -548,8 +550,14 @@ void setupJavaGDfunctions(NewDevDesc *dd) {
     dd->polygon = newJavaGD_Polygon;
     dd->locator = newJavaGD_Locator;
     dd->mode = newJavaGD_Mode;
-    dd->hold = newJavaGD_Hold;
     dd->metricInfo = newJavaGD_MetricInfo;
+#if R_GE_version >= 4
+    dd->hasTextUTF8 = TRUE;
+    dd->strWidthUTF8 = newJavaGD_StrWidth;
+    dd->textUTF8 = newJavaGD_Text;
+#else
+    dd->hold = newJavaGD_Hold;
+#endif
 }
 
 /*--------- Java Initialization -----------*/

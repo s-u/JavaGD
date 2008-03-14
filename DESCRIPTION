@@ -1,5 +1,5 @@
 Package: JavaGD
-Version: 0.3-4
+Version: 0.4-3
 Title: Java Graphics Device
 Author: Simon Urbanek <Simon.Urbanek@R-project.org>
 Maintainer: Simon Urbanek <Simon.Urbanek@R-project.org>
@@ -11,3 +11,4 @@ Description: Graphics device routing all graphics commands to a Java
 	     implementations are included.
 License: GPL version 2 or newer
 URL: http://www.rforge.net/JavaGD/
+Packaged: Sun Feb  3 17:47:05 2008; ripley
