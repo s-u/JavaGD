@@ -1,5 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(JavaGD, 0.1, Simon.Urbanek@math.uni-augsburg.de)
+AC_INIT(JavaGD, 0.5, Simon.Urbanek@math.uni-augsburg.de)
 AC_CONFIG_SRCDIR([src/javaGD.c])
 AC_CONFIG_HEADER([src/config.h])
 
@@ -9,17 +9,11 @@ if test -z "${R_HOME}"; then
   echo "could not determine R_HOME"
   exit 1
 fi
-CC=`${R_HOME}/bin/R CMD config CC`;
-CFLAGS=`${R_HOME}/bin/R CMD config CFLAGS`
+RBIN="${R_HOME}/bin/R"
+CC=`${RBIN} CMD config CC`;
+CPP=`${RBIN} CMD config CPP`;
+CFLAGS=`${RBIN} CMD config CFLAGS`
 AC_SUBST(R_HOME)
-
-# platform check
-#AC_CANONICAL_HOST
-#case "${host_os}" in
-#  darwin*)
-#    AC_DEFINE(DARWIN, 1, [Set if the OS is Darwin/Mac OS X.])
-#    ;;
-#esac
 
 # Checks for programs.
 AC_PROG_CC
@@ -40,77 +34,61 @@ AC_FUNC_MALLOC
 AC_TYPE_SIGNAL
 AC_CHECK_FUNCS([memset mkdir rmdir select socket])
 
-AC_MSG_CHECKING([endianess])
-AC_TRY_RUN(
-	[
-int main(void) { int i=0x12345678; return (*((char*)&i)==0x78)?0:1; }
-	],
-	[AC_MSG_RESULT(intel-like)],
-	[
-		AC_MSG_RESULT(PPC-like)
-		AC_DEFINE(SWAPEND, 1, [Must be defined for platforms with bytesex inverse to intel style])
-	]
-)
+AC_MSG_CHECKING([Java support in R])
+R_JAVA_HOME=`"${RBIN}" CMD config JAVA_HOME`
+: ${JAVA_HOME="${R_JAVA_HOME}"}
+if test -z "${JAVA_HOME}"; then
+   AC_MSG_ERROR([absent
+R was configured without Java support. Please run
+R CMD javareconf
+as root to add Java support to R.
 
-if test -n "${JAVA_HOME}" ; then
-  JAVA_PATH=${JAVA_HOME}:${JAVA_HOME}/jre/bin:${JAVA_HOME}/bin:${PATH}
-else
-  JAVA_PATH=${PATH}
-fi
-JAVA_PATH=${JAVA_PATH}:/usr/java/bin:/usr/jdk/bin:/usr/lib/java/bin:/usr/lib/jdk/bin:/usr/local/java/bin:/usr/local/jdk/bin:/usr/local/lib/java/bin:/usr/local/lib/jdk/bin
-AC_PATH_PROGS(JAVA,java,,${JAVA_PATH})
-
-AC_MSG_CHECKING([Java environment home])
-
-if test -z "${JAVA_HOME}" ; then
-  JAVA_HOME=`${JAVA} -classpath . getsp java.home`
+If you don't have root privileges, run
+R CMD javareconf -e
+to set all Java-related variables and then install rJava.
+(works with R 2.5.0 only)])
 fi
 
-if test -z "${JAVA_HOME}" ; then
-  AC_MSG_ERROR([Cannot find any Java environment. Please install JDK and/or set JAVA_HOME correspondingly.])
+#: ${JAR=`"${RBIN}" CMD config JAR|sed 's/ERROR:.*//'`}
+: ${JAVA=`"${RBIN}" CMD config JAVA|sed 's/ERROR:.*//'`}
+#: ${JAVAC=`"${RBIN}" CMD config JAVAC|sed 's/ERROR:.*//'`}
+#: ${JAVAH=`"${RBIN}" CMD config JAVAH|sed 's/ERROR:.*//'`}
+: ${JAVA_CPPFLAGS=`"${RBIN}" CMD config JAVA_CPPFLAGS|sed 's/ERROR:.*//'`}
+: ${JAVA_LIBS=`"${RBIN}" CMD config JAVA_LIBS|sed 's/ERROR:.*//'`}
+
+AC_MSG_RESULT([present:
+interpreter : '${JAVA}'
+cpp flags   : '${JAVA_CPPFLAGS}'
+java libs   : '${JAVA_LIBS}'])
+
+java_error='One or more Java configuration variables are not set.'
+if test -z "${JAVA}"; then
+   java_error='Java interpreter is missing or not registered in R'
 fi
 
-AC_MSG_RESULT([in ${JAVA_HOME}])
+have_all_flags=no
+if test -n "${JAVA}" && test -n "${JAVA_CPPFLAGS}" && test -n "${JAVA_LIBS}"; then
+  have_all_flags=yes;
+fi
+if test "${have_all_flags}" = no; then
+  AC_MSG_ERROR([${java_error}
+Make sure R is configured with full Java support (including JDK). Run
+R CMD javareconf
+as root to add Java support to R.
 
-AC_CHECK_FILE(${JAVA_HOME}/include/jni.h,
- [JNI_H="${JAVA_HOME}/include"],
- [AC_CHECK_FILE(${JAVA_HOME}/jni.h,
-  [JNI_H="${JAVA_HOME}"],
-  [AC_CHECK_FILE(${JAVA_HOME}/../include/jni.h,
-   [JNI_H="${JAVA_HOME}/../include"],
-   [AC_MSG_ERROR([jni headers not found. Please make sure you have a proper JDK installed.])
-  ])
- ])
+If you don't have root privileges, run
+R CMD javareconf -e
+to set all Java-related variables and then install rJava.
 ])
-
-JAVA_INC="-I${JNI_H}"
-
-# Sun's JDK needs jni_md.h in in addition to jni.h and unfortunately it's stored somewhere else ...
-# this should be become more general at some point - so far we're checking linux and solaris only
-# (well, those are presumably the only platforms supported by Sun's JDK and others don't need this
-# at least as of now - 01/2004)
-jac_found_md=no
-for mddir in . linux solaris ppc irix alpha aix hp-ux genunix cygwin win32 freebsd; do
-AC_CHECK_FILE(${JNI_H}/$mddir/jni_md.h,[JAVA_INC="${JAVA_INC} -I${JNI_H}/$mddir" jac_found_md=yes])
-if test $jac_found_md == yes; then break; fi
-done
-
-JAVA_LIBS=`${JAVA} -classpath . getsp -libs`
-JAVA_LIBS="${JAVA_LIBS} -ljvm"
-
-if test `uname -s` = "Darwin" ; then
-  JAVA_LIBS="-framework JavaVM"
-  # for OS X we supply the necessary headers in the distro so in
-  # PrivateHeaders so we don't need R sources for the compilation
-  XTRA_CF="-I${R_HOME}/Headers -I${R_HOME}/PrivateHeaders"
 fi
+
+JAVA_INC="${JAVA_CPPFLAGS}"
 
 LIBS="${LIBS} ${JAVA_LIBS}"
 CFLAGS="${CFLAGS} ${XTRA_CF} ${JAVA_INC}"
 
 SAVE_LDLP="${LD_LIBRARY_PATH}"
-JAVA_LD=`${JAVA} getsp java.library.path`
-LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${JAVA_LD}"
+LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${JAVA_LD_LIBRARY_PATH}"
 
 AC_MSG_CHECKING([whether JNI programs can be compiled])
 AC_LINK_IFELSE([
@@ -122,23 +100,15 @@ int main(void) {
 	],[AC_MSG_RESULT(yes)],
 	[AC_MSG_ERROR([Cannot compile a simple JNI program. See config.log for details.])])
 
-AC_MSG_CHECKING([JNI data types])
-AC_TRY_RUN(
-	[
-#include <jni.h>
-int main(void) {
-  return (sizeof(int)==sizeof(jint) && sizeof(long)==sizeof(long) && sizeof(jbyte)==sizeof(char) && sizeof(jshort)==sizeof(short) && sizeof(jfloat)==sizeof(float) && sizeof(jdouble)==sizeof(double))?0:1;
-}
-	],
-	[AC_MSG_RESULT([ok])],
-	[AC_MSG_ERROR([One or more JNI types differ from the corresponding native type. You may need to use non-standard compiler flags or a different compiler in order to fix this.])])
-
 AC_SUBST(JAVA_LIBS)
 AC_SUBST(JAVA_INC)
 AC_SUBST(JAVA_HOME)
 AC_SUBST(JAVA_LD)
 AC_SUBST(XTRA_CF)
 AC_SUBST(XTRA_LD)
+AC_SUBST(JAVA)
+AC_SUBST(JAVAC)
+AC_SUBST(JAVAH)
 
 AC_CONFIG_FILES([src/Makevars])
 AC_CONFIG_FILES([R/zzz.R])

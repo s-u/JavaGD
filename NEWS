@@ -1,6 +1,11 @@
  NEWS/Changelog for JavaGD
 ---------------------------
 
+0.5-0	(under development)
+    o	adapt to changes in R 2.7.0
+
+    o	use Java configuration from R
+
 0.4-3	2007-08-22
     o	adapt to changes in R 2.5.0
 
