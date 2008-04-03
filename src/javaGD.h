@@ -1,7 +1,7 @@
 #ifndef _DEV_JAVAGD_H
 #define _DEV_JAVAGD_H
 
-#define JAVAGD_VER 0x000500 /* JavaGD v0.5-0 */
+#define JAVAGD_VER 0x000501 /* JavaGD v0.5-1 */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -9,8 +9,8 @@
 
 #include <R.h>
 #include <Rinternals.h>
-#include <R_ext/GraphicsDevice.h>
 #include <R_ext/GraphicsEngine.h>
+#include <R_ext/GraphicsDevice.h>
 #include <jni.h>
 
 /* for compatibility with older R versions */ 

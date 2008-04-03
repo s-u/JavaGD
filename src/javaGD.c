@@ -110,14 +110,15 @@ Rf_setNewJavaGDDeviceData(NewDevDesc *dd, double gamma_fac, newJavaGDDesc *xd)
 
     dd->ipr[0] = 1/jGDdpiX;
     dd->ipr[1] = 1/jGDdpiY;
+#if R_GE_version < 4
     dd->asp = jGDasp;
 
     /* Device capabilities */
-
     dd->canResizePlot = TRUE;
     dd->canChangeFont = TRUE;
     dd->canRotateText = TRUE;
     dd->canResizeText = TRUE;
+#endif
     dd->canClip = TRUE;
     dd->canHAdj = 2;
     dd->canChangeGamma = FALSE;
@@ -192,14 +193,14 @@ Rf_addJavaGDDevice(char *display, double width, double height, double initps)
 	if (!(dev = (NewDevDesc*)calloc(1, sizeof(NewDevDesc))))
 	    return 0;
 	/* Do this for early redraw attempts */
-	dev->displayList = R_NilValue;
 #if R_GE_version < 4
+	dev->displayList = R_NilValue;
 	dev->newDevStruct = 1;
-#endif
 	/* Make sure that this is initialised before a GC can occur.
 	 * This (and displayList) get protected during GC
 	 */
 	dev->savedSnapshot = R_NilValue;
+#endif
 	/* Took out the GInit because MOST of it is setting up
 	 * R base graphics parameters.  
 	 * This is supposed to happen via addDevice now.
