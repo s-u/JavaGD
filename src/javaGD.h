@@ -1,13 +1,14 @@
 #ifndef _DEV_JAVAGD_H
 #define _DEV_JAVAGD_H
 
-#define JAVAGD_VER 0x000501 /* JavaGD v0.5-1 */
+#define JAVAGD_VER 0x000502 /* JavaGD v0.5-2 */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
 
 #include <R.h>
+#include <Rversion.h>
 #include <Rinternals.h>
 #include <R_ext/GraphicsEngine.h>
 #include <R_ext/GraphicsDevice.h>
@@ -23,6 +24,11 @@
 #define ndevNumber(X) devNumber((DevDesc*)(X))
 #define GEkillDevice(X) KillDevice(X)
 #define desc2GEDesc(X) ((DevDesc*) GetDevice(devNumber((DevDesc*) (X))))
+#endif
+#if R_VERSION >= R_Version(2,8,0)
+#ifndef NewDevDesc
+#define NewDevDesc DevDesc
+#endif
 #endif
 
 Rboolean newJavaGDDeviceDriver(NewDevDesc*, char*, double, double, double);

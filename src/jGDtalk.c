@@ -1,6 +1,5 @@
 #include "javaGD.h"
 #include "jGDtalk.h"
-#include <Rversion.h>
 #include <Rdefines.h>
 
 int initJavaGD(newJavaGDDesc* xd);
@@ -19,6 +18,12 @@ char *symbol2utf8(const char *c); /* from s2u.c */
 
 #if R_VERSION < 0x10900
 #error This JavaGD needs at least R version 1.9.0
+#endif
+
+#if R_VERSION >= R_Version(2,7,0)
+#define constxt const
+#else
+#define constxt
 #endif
 
 /* the internal representation of a color in this API is RGBa with a=0 meaning transparent and a=255 meaning opaque (hence a means 'opacity'). previous implementation was different (inverse meaning and 0x80 as NA), so watch out. */
@@ -61,10 +66,10 @@ static void newJavaGD_Rect(double x0, double y0, double x1, double y1,
 static void newJavaGD_Size(double *left, double *right,
 			 double *bottom, double *top,
 			 NewDevDesc *dd);
-static double newJavaGD_StrWidth(char *str, 
+static double newJavaGD_StrWidth(constxt char *str, 
 			       R_GE_gcontext *gc,
 			       NewDevDesc *dd);
-static void newJavaGD_Text(double x, double y, char *str,
+static void newJavaGD_Text(double x, double y, constxt char *str,
 			 double rot, double hadj,
 			 R_GE_gcontext *gc,
 			 NewDevDesc *dd);
@@ -491,7 +496,7 @@ static void newJavaGD_Size(double *left, double *right,  double *bottom, double 
 	chkX(env);
 }
 
-static double newJavaGD_StrWidth(char *str,  R_GE_gcontext *gc,  NewDevDesc *dd)
+static double newJavaGD_StrWidth(constxt char *str,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
     newJavaGDDesc *xd = (newJavaGDDesc *) dd->deviceSpecific;
     JNIEnv *env = getJNIEnv();
@@ -512,7 +517,7 @@ static double newJavaGD_StrWidth(char *str,  R_GE_gcontext *gc,  NewDevDesc *dd)
     return 0.0;
 }
 
-static void newJavaGD_Text(double x, double y, char *str,  double rot, double hadj,  R_GE_gcontext *gc,  NewDevDesc *dd)
+static void newJavaGD_Text(double x, double y, constxt char *str,  double rot, double hadj,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
     newJavaGDDesc *xd = (newJavaGDDesc *) dd->deviceSpecific;
     JNIEnv *env = getJNIEnv();

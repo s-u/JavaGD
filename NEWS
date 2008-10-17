@@ -1,6 +1,9 @@
  NEWS/Changelog for JavaGD
 ---------------------------
 
+0.5-2	2008-10-17
+    o	adapt to changes in R-devel (2.9.0-to-be)
+
 0.5-1	2008-04-03
     o	adapt to even more changes in R 2.7.0
 
