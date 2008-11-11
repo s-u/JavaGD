@@ -580,7 +580,9 @@ void setupJavaGDfunctions(NewDevDesc *dd) {
 static JavaVMInitArgs vm_args;
 static JavaVMOption *vm_options;
 #else
-#error "Java/JNI 1.2 or higher is required"
+#warning "** Java/JNI 1.2 or higher is required **"
+** ERROR: Java/JNI 1.2 or higher is required **
+/* we can't use #error to signal this on Windows due to a bug in the way dependencies are generated */
 #endif
 
 int initJVM(char *user_classpath) {
