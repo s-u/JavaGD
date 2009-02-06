@@ -69,7 +69,14 @@ static void newJavaGD_Size(double *left, double *right,
 static double newJavaGD_StrWidth(constxt char *str, 
 			       R_GE_gcontext *gc,
 			       NewDevDesc *dd);
+static double newJavaGD_StrWidthUTF8(constxt char *str, 
+			       R_GE_gcontext *gc,
+			       NewDevDesc *dd);
 static void newJavaGD_Text(double x, double y, constxt char *str,
+			 double rot, double hadj,
+			 R_GE_gcontext *gc,
+			 NewDevDesc *dd);
+static void newJavaGD_TextUTF8(double x, double y, constxt char *str,
 			 double rot, double hadj,
 			 R_GE_gcontext *gc,
 			 NewDevDesc *dd);
@@ -496,7 +503,28 @@ static void newJavaGD_Size(double *left, double *right,  double *bottom, double 
 	chkX(env);
 }
 
+static constxt char *convertToUTF8(constxt char *str, R_GE_gcontext *gc)
+{
+    if (gc->fontface == 5) /* symbol font needs re-coding to UTF-8 */
+	str = symbol2utf8(str);
+#ifdef translateCharUTF8
+    else { /* first check whether we are dealing with non-ASCII at all */
+	int ascii = 1;
+	constxt unsigned char *c = (constxt unsigned char*) str;
+	while (*c) { if (*c > 127) { ascii = 0; break; } c++; }
+	if (!ascii) /* non-ASCII, we need to convert it to UTF8 */
+	    str = translateCharUTF8(mkCharCE(str, CE_NATIVE));
+    }
+#endif
+    return str;
+}
+
 static double newJavaGD_StrWidth(constxt char *str,  R_GE_gcontext *gc,  NewDevDesc *dd)
+{
+    return newJavaGD_StrWidthUTF8(convertToUTF8(str, gc), gc, dd);
+}
+
+static double newJavaGD_StrWidthUTF8(constxt char *str,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
     newJavaGDDesc *xd = (newJavaGDDesc *) dd->deviceSpecific;
     JNIEnv *env = getJNIEnv();
@@ -507,8 +535,6 @@ static double newJavaGD_StrWidth(constxt char *str,  R_GE_gcontext *gc,  NewDevD
     
     checkGC(env,xd, gc);
     
-    if (gc->fontface==5) /* symbol font needs re-coding to UTF-8 */
-      str = symbol2utf8(str);
     s = (*env)->NewStringUTF(env, str);
     mid = (*env)->GetMethodID(env, xd->talkClass, "gdStrWidth", "(Ljava/lang/String;)D");
     if (mid) return (*env)->CallDoubleMethod(env, xd->talk, mid, s);
@@ -519,6 +545,11 @@ static double newJavaGD_StrWidth(constxt char *str,  R_GE_gcontext *gc,  NewDevD
 
 static void newJavaGD_Text(double x, double y, constxt char *str,  double rot, double hadj,  R_GE_gcontext *gc,  NewDevDesc *dd)
 {
+    newJavaGD_TextUTF8(x, y, convertToUTF8(str, gc), rot, hadj, gc, dd);
+}
+
+static void newJavaGD_TextUTF8(double x, double y, constxt char *str,  double rot, double hadj,  R_GE_gcontext *gc,  NewDevDesc *dd)
+{
     newJavaGDDesc *xd = (newJavaGDDesc *) dd->deviceSpecific;
     JNIEnv *env = getJNIEnv();
     jmethodID mid;
@@ -528,8 +559,6 @@ static void newJavaGD_Text(double x, double y, constxt char *str,  double rot, d
         
     checkGC(env,xd, gc);
     
-    if (gc->fontface==5) /* symbol font needs re-coding to UTF-8 */
-      str = symbol2utf8(str);
     s = (*env)->NewStringUTF(env, str);
     mid = (*env)->GetMethodID(env, xd->talkClass, "gdText", "(DDLjava/lang/String;DD)V");
     if (mid)
@@ -560,8 +589,8 @@ void setupJavaGDfunctions(NewDevDesc *dd) {
     dd->metricInfo = newJavaGD_MetricInfo;
 #if R_GE_version >= 4
     dd->hasTextUTF8 = TRUE;
-    dd->strWidthUTF8 = newJavaGD_StrWidth;
-    dd->textUTF8 = newJavaGD_Text;
+    dd->strWidthUTF8 = newJavaGD_StrWidthUTF8;
+    dd->textUTF8 = newJavaGD_TextUTF8;
 #else
     dd->hold = newJavaGD_Hold;
 #endif

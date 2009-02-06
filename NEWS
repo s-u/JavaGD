@@ -4,6 +4,16 @@
 0.5-3	(under development)
     o	substitute $(JAVA_HOME) when testing JNI
 
+    o	add UTF-8 conversion from native strings where
+	TextUTF8 is not used
+
+    o	add a work-around for Windows where the Symbol font is
+	handled incorrectly and cannot be used directly.
+
+	This behavior can also be overridden by the
+	javagd.usesymbolfont property which can be set to true/false
+	(the default is false on Windows and true elsewhere).
+
 0.5-2	2008-10-17
     o	adapt to changes in R-devel (2.9.0-to-be)
 
