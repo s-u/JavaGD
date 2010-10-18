@@ -1,7 +1,7 @@
  NEWS/Changelog for JavaGD
 ---------------------------
 
-0.5-3	(under development)
+0.5-3	2010-10-18
     o	substitute $(JAVA_HOME) when testing JNI
 
     o	add UTF-8 conversion from native strings where
