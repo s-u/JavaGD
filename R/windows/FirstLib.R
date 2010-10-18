@@ -38,7 +38,10 @@ function(libname, pkgname) {
     if(!nchar(javahome)) stop("JAVA_HOME is not set")
 #    else cat("using JAVA_HOME =", javahome, "\n")
     .putenv(PATH=paste(Sys.getenv("PATH"),
-               file.path(javahome, "bin", "client"), sep=";"))
+               file.path(javahome, "bin", "client"),
+               file.path(javahome, "bin", "server"),
+               file.path(javahome, "bin"),
+	       sep=";"))
     .javaGD.jar.file<-paste(libname,pkgname,"java","javaGD.jar",sep=.Platform$file.sep)
     library.dynam("JavaGD", pkgname, libname)
     # set internal classpath in case we really need to initialize the JVM

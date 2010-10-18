@@ -680,19 +680,27 @@ int initJavaGD(newJavaGDDesc* xd) {
       jmethodID mid;
       jclass c=0;
       char *customClass=getenv("JAVAGD_CLASS_NAME");
-      if (customClass) { c=(*env)->FindClass(env, customClass); chkX(env); }
-      if (!c) { c=(*env)->FindClass(env, "org/rosuda/javaGD/JavaGD"); chkX(env); }
-      if (!c) { c=(*env)->FindClass(env, "JavaGD"); chkX(env); }
+      if (!getenv("JAVAGD_USE_RJAVA")) {
+	if (customClass) { c=(*env)->FindClass(env, customClass); chkX(env); }
+	if (!c) { c=(*env)->FindClass(env, "org/rosuda/javaGD/JavaGD"); chkX(env); }
+	if (!c) { c=(*env)->FindClass(env, "JavaGD"); chkX(env); }
+      }
       if (!c) {
 	/* use rJava to instantiate the JavaGD class */
 	SEXP cl;
+	int  te;
 	if (!customClass || !*customClass) customClass="org/rosuda/javaGD/JavaGD";
-	cl = eval(LCONS(install(".jnew"),LCONS(mkString(customClass),R_NilValue)), R_GlobalEnv);
-	chkX(env);
-	if (cl != R_NilValue && inherits(cl, "jobjRef")) {
-	  o = (jobject) R_ExternalPtrAddr(GET_SLOT(cl, install("jobj")));
-	  releaseO = 0;
-	  c = (*env)->GetObjectClass(env, o);
+	/* require(rJava) to make sure it's loaded */
+	cl = R_tryEval(lang2(install("require"), install("rJava")), R_GlobalEnv, &te);
+	if (te == 0 && asLogical(cl)) { /* rJava is available and loaded */
+	  /* if .jniInitialized is FALSE then no one actually loaded rJava before, so */
+	  cl = eval(lang2(install(".jnew"), mkString(customClass)), R_GlobalEnv);
+	  chkX(env);
+	  if (cl != R_NilValue && inherits(cl, "jobjRef")) {
+	    o = (jobject) R_ExternalPtrAddr(GET_SLOT(cl, install("jobj")));
+	    releaseO = 0;
+	    c = (*env)->GetObjectClass(env, o);
+	  }
 	}
       }
       if (!c && !o) error("Cannot find JavaGD class.");
