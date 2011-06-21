@@ -13,5 +13,5 @@ PKG_LIBS= -ljvm.dll -L$(TOP)/src -Ljvm-w32 -L.
 all: WinRegistry.dll $(SHLIB)
 
 WinRegistry.dll:
-	$(MAKE) $(MAKEFLAGS) -C jvm-w32 WinRegistry.dll
+	$(MAKE) -C jvm-w32 WinRegistry.dll
 	cp jvm-w32/WinRegistry.dll .
