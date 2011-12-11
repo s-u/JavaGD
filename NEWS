@@ -1,7 +1,7 @@
  NEWS/Changelog for JavaGD
 ---------------------------
 
-0.5-5	(under development)
+0.5-5	2011-12-10
     o	minor cleanups to get rid of warnings
 
     o	add raster support
