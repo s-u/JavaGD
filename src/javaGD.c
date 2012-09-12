@@ -46,7 +46,7 @@ double jGDasp  = 1.0;
 /*	5) tcp port to connect to	*/
 
 Rboolean newJavaGDDeviceDriver(NewDevDesc *dd,
-			    char *disp_name,
+			    const char *disp_name,
 			    double width,
 			    double height,
                             double initps)
@@ -178,7 +178,7 @@ static char *SaveString(SEXP sxp, int offset)
 } */
 
 static GEDevDesc* 
-Rf_addJavaGDDevice(char *display, double width, double height, double initps)
+Rf_addJavaGDDevice(const char *display, double width, double height, double initps)
 {
     NewDevDesc *dev = NULL;
     GEDevDesc *dd;
@@ -244,9 +244,8 @@ SEXP javaGDobjectCall(SEXP dev) {
   GEDevDesc *gd;
   void *ptr=0;
 
-  if (!isInteger(dev) || LENGTH(dev)<1) return R_NilValue;
-  dn = INTEGER(dev)[0];
-  if (dn<0 || dn>=ds) return R_NilValue;
+  dn = asInteger(dev);
+  if (dn < 0 || dn >= ds) return R_NilValue;
   gd=GEgetDevice(dn);
   if (gd) {
     NewDevDesc *dd=gd->dev;
@@ -294,17 +293,26 @@ void resizedJavaGD(NewDevDesc *dd) {
 		GEplayDisplayList(GEgetDevice(devNum));
 }
 
-void newJavaGD(char **name, double *w, double *h, double *ps) {
-	Rf_addJavaGDDevice(*name, *w, *h, *ps);  
+SEXP newJavaGD(SEXP name, SEXP sw, SEXP sh, SEXP sps) {
+    double w = asReal(sw), h = asReal(sh), ps = asReal(sps);
+    if (TYPEOF(name) != STRSXP || LENGTH(name) < 1)
+	Rf_error("invalid name");
+    if (ISNAN(w) || w <= 0.0 || ISNAN(h) || h <= 0.0 || ISNAN(ps) || ps <= 0.0)
+	Rf_error("invalid width, height or ps");
+    Rf_addJavaGDDevice(CHAR(STRING_ELT(name, 0)), w, h, ps);
+    return name;
 }
 
-void javaGDgetSize(int *dev, double *par) {
-    int ds=NumDevices();
-    if (*dev<0 || *dev>=ds) return;
+SEXP javaGDgetSize(SEXP sDev) {
+    SEXP res = R_NilValue;
+    int dev = asInteger(sDev);
+    int ds = NumDevices();
+    if (dev < 0 || dev >= ds)
+	Rf_error("invalid device");    
     {
-        GEDevDesc *gd=GEgetDevice(*dev);
+        GEDevDesc *gd = GEgetDevice(dev);
         if (gd) {
-            NewDevDesc *dd=gd->dev;
+            NewDevDesc *dd = gd->dev;
             /*
              if (dd) {
                  newJavaGDDesc *xd=(newJavaGDDesc*) dd->deviceSpecific;
@@ -312,12 +320,15 @@ void javaGDgetSize(int *dev, double *par) {
              }
              */
 			if (dd) {
-				par[0]=dd->left;
-				par[1]=dd->top;
-				par[2]=dd->right;
-				par[3]=dd->bottom;
-				par[4]=jGDdpiX;
-				par[5]=jGDdpiY;
+			    res = PROTECT(mkNamed(VECSXP, (const char*[]) {
+					"x", "y", "width", "height", "dpiX", "dpiY", ""}));
+			    SET_VECTOR_ELT(res, 0, ScalarReal(dd->left));
+			    SET_VECTOR_ELT(res, 1, ScalarReal(dd->top));
+			    SET_VECTOR_ELT(res, 2, ScalarReal(dd->right - dd->left));
+			    SET_VECTOR_ELT(res, 3, ScalarReal(dd->bottom - dd->top));
+			    SET_VECTOR_ELT(res, 4, ScalarReal(jGDdpiX));
+			    SET_VECTOR_ELT(res, 5, ScalarReal(jGDdpiY));
+			    UNPROTECT(1);
 			} else {
 #ifdef JGD_DEBUG
 				printf("sizefailed>> device=%d, gd=%lx, dd=%lx\n",*dev,
@@ -326,6 +337,7 @@ void javaGDgetSize(int *dev, double *par) {
 			}	
         }
     }
+    return res;
 }
 
 void javaGDsetDisplayParam(double *par) {
@@ -340,6 +352,6 @@ void javaGDgetDisplayParam(double *par) {
 	par[2] = jGDasp;
 }
 
-void javaGDversion(int *ver) {*
-	ver=JAVAGD_VER;
+SEXP javaGDversion() {
+    return ScalarInteger(JAVAGD_VER);
 }

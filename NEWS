@@ -4,6 +4,16 @@
 0.5-6	(under development)
     o	change raster color space to sRGB
 
+    o	add support for flush/hold
+
+    o	add support for polypaths (modified patch
+	by Ian Fellows)
+
+    o	add a namespace
+
+    o	fixed a leak in StrWidth callback
+
+
 0.5-5	2011-12-10
     o	minor cleanups to get rid of warnings
 
