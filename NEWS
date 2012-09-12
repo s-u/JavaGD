@@ -7,7 +7,7 @@
     o	add support for flush/hold
 
     o	add support for polypaths (modified patch
-	by Ian Fellows)
+	by Stephan Wahlbrink)
 
     o	add a namespace
 
