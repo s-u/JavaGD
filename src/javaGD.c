@@ -258,14 +258,17 @@ SEXP javaGDobjectCall(SEXP dev) {
   return R_MakeExternalPtr(ptr, R_NilValue, R_NilValue);
 }
 
-void javaGDresize(int dev) {
-    int ds=NumDevices();
-    int i=0;
-    if (dev>=0 && dev<ds) { i=dev; ds=dev+1; }
-    while (i<ds) {
-        GEDevDesc *gd=GEgetDevice(i);
+static void javaGDresize_(int dev) {
+    int ds = NumDevices();
+    int i = 0;
+    if (dev >= 0 && dev < ds) {
+	i = dev;
+	ds = dev + 1;
+    }
+    while (i < ds) {
+        GEDevDesc *gd = GEgetDevice(i);
         if (gd) {
-            NewDevDesc *dd=gd->dev;
+            NewDevDesc *dd = gd->dev;
 #ifdef JGD_DEBUG
             printf("javaGDresize: device=%d, dd=%lx\n", i, (unsigned long)dd);
 #endif
@@ -279,6 +282,16 @@ void javaGDresize(int dev) {
         }
         i++;
     }
+}
+
+/* NOTE: we have to keep this for compatibility since it is referenced in Java code */
+void javaGDresize(int *dev) {
+    if (dev) javaGDresize_(*dev);
+}
+
+SEXP javaGDresizeCall(SEXP dev) {
+    javaGDresize_(asInteger(dev));
+    return dev;
 }
 
 void resizedJavaGD(NewDevDesc *dd) {
@@ -340,16 +353,26 @@ SEXP javaGDgetSize(SEXP sDev) {
     return res;
 }
 
-void javaGDsetDisplayParam(double *par) {
-	jGDdpiX = par[0];
-	jGDdpiY = par[1];
-	jGDasp  = par[2];
+SEXP javaGDsetDisplayParam(SEXP pars) {
+    int n;
+    double *par;
+    if (TYPEOF(pars) != REALSXP)
+	pars = coerceVector(pars, REALSXP);
+    par = REAL(pars);
+    n = LENGTH(pars);
+    if (n > 0) jGDdpiX = par[0];
+    if (n > 1) jGDdpiY = par[1];
+    if (n > 2) jGDasp  = par[2];
+    return pars;
 }
 
-void javaGDgetDisplayParam(double *par) {
-	par[0] = jGDdpiX;
-	par[1] = jGDdpiY;
-	par[2] = jGDasp;
+SEXP javaGDgetDisplayParam() {
+    SEXP res = mkNamed(REALSXP, (const char*[]) { "dpiX", "dpiY", "aspect", "" });
+    double *par = REAL(res);
+    par[0] = jGDdpiX;
+    par[1] = jGDdpiY;
+    par[2] = jGDasp;
+    return res;
 }
 
 SEXP javaGDversion() {

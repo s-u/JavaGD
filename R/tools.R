@@ -15,16 +15,20 @@
 	list(major=v[1]%/%65536, minor=(v[1]%/%256)%%256, patch=(v[1]%%256), numeric=v[1])
 }
 
-.javaGD.set.display.parameters <- function(dpiX=100, dpiY=100, aspect=1) {
-	invisible(.C(javaGDsetDisplayParam,as.double(c(dpiX, dpiY, aspect))))
-}
+.javaGD.set.display.parameters <- function(dpiX=100, dpiY=100, aspect=1)
+	invisible(.Call(javaGDsetDisplayParam,c(dpiX, dpiY, aspect)))
+
+.javaGD.get.display.parameters <- function()
+    .Call(javaGDgetDisplayParam)
 
 .javaGD.set.class.path <- function(cp) {
     cp <- as.character(cp)
     if (length(cp) < 1) stop("Invalid class path")
-    invisible(.C(setJavaGDClassPath, cp))
+    invisible(.Call(setJavaGDClassPath, cp))
 }
 
-.javaGD.get.class.path <- function() {
-    .C(getJavaGDClassPath, "")[[1]]
-}
+.javaGD.get.class.path <- function()
+    .Call(getJavaGDClassPath)
+
+.javaGD.resize <- function(devNr = dev.cur())
+    invisible(.Call(javaGDresizeCall, devNr))

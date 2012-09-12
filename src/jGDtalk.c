@@ -752,13 +752,18 @@ int initJVM(char *user_classpath) {
 
 /*---------------- R-accessible functions -------------------*/
 
-void setJavaGDClassPath(char **cp) {
-    jarClassPath=(char*)malloc(strlen(*cp)+1);
-    strcpy(jarClassPath, *cp);
+SEXP setJavaGDClassPath(SEXP scp) {
+    const char *cp;
+    if (TYPEOF(scp) != STRSXP || LENGTH(scp) != 1)
+	Rf_error("invalid class path");
+    cp = CHAR(STRING_ELT(scp, 0));
+    /* FIXME: this will leak, but fixing it would require non-static initialization .. */
+    jarClassPath = strdup(cp);
+    return scp;
 }
 
-void getJavaGDClassPath(char **cp) {
-    *cp=jarClassPath;
+SEXP getJavaGDClassPath() {
+    return mkString(jarClassPath);
 }
 
 int initJavaGD(newJavaGDDesc* xd) {
