@@ -16,7 +16,7 @@ function(libname, pkgname) {
         if (inherits(hive, "try-error"))
             stop("JAVA_HOME cannot be determined from the Registry")
         if (!length(hive$CurrentVersion))
-            stop("No CurrentVersion entry in '",key,"'! Try re-installing Java and make sure R and Java have matching architectures.")
+            stop("No CurrentVersion entry! Try re-installing Java and make sure R and Java have matching architectures.")
         this <- hive[[hive$CurrentVersion]]
         javahome <- this$JavaHome
         paths <- dirname(this$RuntimeLib) # wrong on 64-bit
@@ -56,5 +56,5 @@ function(libname, pkgname) {
     for (s in symbols) assign(s, getNativeSymbolInfo(s, "JavaGD"), envir=env)
 
     # set internal classpath in case we really need to initialize the JVM
-    .Call("setJavaGDClassPath", paste(.javaGD.jar.file, Sys.getenv("CLASSPATH"), sep=";"))
+    .Call(setJavaGDClassPath, paste(.javaGD.jar.file, Sys.getenv("CLASSPATH"), sep=";"))
 }
