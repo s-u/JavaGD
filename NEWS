@@ -1,8 +1,15 @@
  NEWS/Changelog for JavaGD
 ---------------------------
 
+0.6-2	(under development)
+    o	fix a bug in resize that refused to resize if a device was
+	removed (closed) that was in the list before the JGD device.
+	(Thanks to Eugene Schava for reporting)
+
+
 0.6-1	2012-09-13
     o	clean up Windows version and remove dependency on WinRegistry
+
 
 0.6-0	2012-09-12
     o	change raster color space to sRGB
