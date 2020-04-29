@@ -3,3 +3,6 @@ if(tools:::.OStype() != "windows") {
     useDynLib(JavaGD, newJavaGD, javaGDversion, setJavaGDClassPath, getJavaGDClassPath, javaGDsetDisplayParam, javaGDgetDisplayParam, javaGDobjectCall, javaGDgetSize, javaGDresizeCall)
 }
 export(JavaGD)
+importFrom("grDevices", "dev.copy", "dev.cur", "dev.off", "dev.set", "pdf")
+importFrom("graphics", "par")
+importFrom("rJava", ".jinit", ".jmkref")
