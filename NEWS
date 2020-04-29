@@ -1,10 +1,12 @@
  NEWS/Changelog for JavaGD
 ---------------------------
 
-0.6-2	(under development)
+0.6-2	2020-04-30
     o	fix a bug in resize that refused to resize if a device was
 	removed (closed) that was in the list before the JGD device.
 	(Thanks to Eugene Schava for reporting)
+
+    o	minor updates in configure and dependencies
 
 
 0.6-1	2012-09-13
