@@ -11,7 +11,7 @@ if test -z "${R_HOME}"; then
 fi
 RBIN="${R_HOME}/bin/R"
 CC=`${RBIN} CMD config CC`;
-CPP=`${RBIN} CMD config CPP`;
+CPP="$CC -E"
 CFLAGS=`${RBIN} CMD config CFLAGS`
 AC_SUBST(R_HOME)
 
@@ -100,13 +100,13 @@ CFLAGS="${CFLAGS} ${XTRA_CF} ${JAVA_CPPFLAGS0}"
 LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${JAVA_LD_LIBRARY_PATH0}"
 
 AC_MSG_CHECKING([whether JNI programs can be compiled])
-AC_LINK_IFELSE([
+AC_LINK_IFELSE([AC_LANG_SOURCE([
 #include <jni.h>
 int main(void) {
     jobject o;
     return 0;
 }
-	],[AC_MSG_RESULT(yes)],
+	])],[AC_MSG_RESULT(yes)],
 	[AC_MSG_ERROR([Cannot compile a simple JNI program. See config.log for details.])])
 
 AC_SUBST(JAVA_LIBS)
