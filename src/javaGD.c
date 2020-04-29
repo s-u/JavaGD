@@ -177,15 +177,11 @@ static char *SaveString(SEXP sxp, int offset)
     return s;
 } */
 
-/* we don't have access to R_MaxDdevices, so we just track the highest number we ever use */
-static int maxJdeviceNum;
-
 static GEDevDesc* 
 Rf_addJavaGDDevice(const char *display, double width, double height, double initps)
 {
     NewDevDesc *dev = NULL;
     GEDevDesc *dd;
-    int myDevID;
     
     char *devname="JavaGD";
 
@@ -218,15 +214,9 @@ Rf_addJavaGDDevice(const char *display, double width, double height, double init
 	gsetVar(install(".Device"), mkString(devname), R_NilValue);
 	dd = GEcreateDevDesc(dev);
 	GEaddDevice(dd);
-	/* the fastest way is to use curDevice() since GEaddDevice()
-	   sets the current device. Another alternative would be
-	   ndevNumber(dd) in case that assumption is broken */
-	myDevID = curDevice();
-	if (myDevID > maxJdeviceNum)
-	    maxJdeviceNum = myDevID;
 	GEinitDisplayList(dd);
 #ifdef JGD_DEBUG
-	printf("JavaGD> devNum=%d, dd=%lx\n", myDevID, (unsigned long)dd);
+	printf("JavaGD> devNum=%d, dd=%lx\n", ndevNumber(dd), (unsigned long)dd);
 #endif
 #ifdef BEGIN_SUSPEND_INTERRUPTS
     } END_SUSPEND_INTERRUPTS;
@@ -249,7 +239,7 @@ void reloadJavaGD(int *dn) {
 }
 
 SEXP javaGDobjectCall(SEXP dev) {
-    int ds = maxJdeviceNum + 1;
+  int ds=NumDevices();
   int dn;
   GEDevDesc *gd;
   void *ptr=0;
@@ -269,7 +259,7 @@ SEXP javaGDobjectCall(SEXP dev) {
 }
 
 static void javaGDresize_(int dev) {
-    int ds = maxJdeviceNum + 1;
+    int ds = NumDevices();
     int i = 0;
     if (dev >= 0 && dev < ds) {
 	i = dev;
@@ -329,7 +319,7 @@ SEXP newJavaGD(SEXP name, SEXP sw, SEXP sh, SEXP sps) {
 SEXP javaGDgetSize(SEXP sDev) {
     SEXP res = R_NilValue;
     int dev = asInteger(sDev);
-    int ds = maxJdeviceNum + 1;
+    int ds = NumDevices();
     if (dev < 0 || dev >= ds)
 	Rf_error("invalid device");    
     {
