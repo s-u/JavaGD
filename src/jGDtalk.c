@@ -87,6 +87,13 @@ static void newJavaGD_Raster(unsigned int *raster, int w, int h,
 			   double rot, Rboolean interpolate,
 			   R_GE_gcontext *gc, NewDevDesc *dd);
 
+static SEXP     newJavaGD_setPattern(SEXP pattern, pDevDesc dd);
+static void     newJavaGD_releasePattern(SEXP ref, pDevDesc dd);
+static SEXP     newJavaGD_setClipPath(SEXP path, SEXP ref, pDevDesc dd);
+static void     newJavaGD_releaseClipPath(SEXP ref, pDevDesc dd);
+static SEXP     newJavaGD_setMask(SEXP path, SEXP ref, pDevDesc dd);
+static void     newJavaGD_releaseMask(SEXP ref, pDevDesc dd);
+
 static R_GE_gcontext lastGC; /** last graphics context. the API send changes, not the entire context, so we cache it for comparison here */
 
 static JavaVM *jvm=0;
@@ -654,6 +661,23 @@ static void newJavaGD_Raster(unsigned int *raster, int w, int h,
 
 }
 
+static SEXP newJavaGD_setPattern(SEXP pattern, pDevDesc dd) {
+    return R_NilValue;
+}
+
+static void newJavaGD_releasePattern(SEXP ref, pDevDesc dd) {}
+
+static SEXP newJavaGD_setClipPath(SEXP path, SEXP ref, pDevDesc dd) {
+    return R_NilValue;
+}
+
+static void newJavaGD_releaseClipPath(SEXP ref, pDevDesc dd) {}
+
+static SEXP newJavaGD_setMask(SEXP path, SEXP ref, pDevDesc dd) {
+    return R_NilValue;
+}
+
+static void newJavaGD_releaseMask(SEXP ref, pDevDesc dd) {}
 
 /*-----------------------------------------------------------------------*/
 
@@ -685,6 +709,14 @@ void setupJavaGDfunctions(NewDevDesc *dd) {
     dd->path = newJavaGD_Path;
 #if R_GE_version >= 9
     dd->holdflush = newJavaGD_HoldFlush;
+#if R_GE_version >= 13
+    dd->setPattern      = newJavaGD_setPattern;
+    dd->releasePattern  = newJavaGD_releasePattern;
+    dd->setClipPath     = newJavaGD_setClipPath;
+    dd->releaseClipPath = newJavaGD_releaseClipPath;
+    dd->setMask         = newJavaGD_setMask;
+    dd->releaseMask     = newJavaGD_releaseMask;
+#endif
 #endif
 #endif
 #endif

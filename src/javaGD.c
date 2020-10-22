@@ -132,6 +132,10 @@ Rf_setNewJavaGDDeviceData(NewDevDesc *dd, double gamma_fac, newJavaGDDesc *xd)
 
     dd->deviceSpecific = (void *) xd;
 
+#if R_GE_version >= 13
+    dd->deviceVersion = R_GE_definitions;
+#endif
+
     dd->displayListOn = TRUE;
 
     return(TRUE);
