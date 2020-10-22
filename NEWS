@@ -1,6 +1,13 @@
  NEWS/Changelog for JavaGD
 ---------------------------
 
+0.6-3	2020-10-22
+    o	update the device to be compatible with the upcoming changes
+	for R 4.1.0. Note that the new functionality (gradients,
+	masking paths etc.) is not yet implemented by the device, but
+	it will still work with the new graphics engine.
+
+
 0.6-2	2020-04-30
     o	fix a bug in resize that refused to resize if a device was
 	removed (closed) that was in the list before the JGD device.
