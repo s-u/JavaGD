@@ -1,6 +1,11 @@
  NEWS/Changelog for JavaGD
 ---------------------------
 
+0.6-4	2020-11-02
+    o	no functional changes, only minor packaging changes to appease
+	CRAN checks
+
+
 0.6-3	2020-10-22
     o	update the device to be compatible with the upcoming changes
 	for R 4.1.0. Note that the new functionality (gradients,
