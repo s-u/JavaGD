@@ -113,7 +113,7 @@ static void chkX(JNIEnv *env)
 }
 
 /** get java environment for the current thread or 0 if something goes wrong. */
-static JNIEnv *getJNIEnv() {
+static JNIEnv *getJNIEnv(void) {
     JNIEnv *env;
     jsize l;
     jint res = 0;
@@ -794,7 +794,7 @@ SEXP setJavaGDClassPath(SEXP scp) {
     return scp;
 }
 
-SEXP getJavaGDClassPath() {
+SEXP getJavaGDClassPath(void) {
     return mkString(jarClassPath);
 }
 

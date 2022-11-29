@@ -370,7 +370,7 @@ SEXP javaGDsetDisplayParam(SEXP pars) {
     return pars;
 }
 
-SEXP javaGDgetDisplayParam() {
+SEXP javaGDgetDisplayParam(void) {
     SEXP res = mkNamed(REALSXP, (const char*[]) { "dpiX", "dpiY", "aspect", "" });
     double *par = REAL(res);
     par[0] = jGDdpiX;
@@ -379,6 +379,6 @@ SEXP javaGDgetDisplayParam() {
     return res;
 }
 
-SEXP javaGDversion() {
+SEXP javaGDversion(void) {
     return ScalarInteger(JAVAGD_VER);
 }
