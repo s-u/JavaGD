@@ -24,9 +24,24 @@ if [ ! -e configure ]; then
     exit 1
 fi
 
+echo Finding out lowest supported Java target ...
+for JAVA_VER_TARGET in 1.1 1.2 1.4 1.6 1.7 8 11 13; do
+    if javac -target ${JAVA_VER_TARGET} -source ${JAVA_VER_TARGET} -d /tmp/ tools/getsp.java 2>/dev/null; then break; fi
+    echo Java ${JAVA_VER_TARGET} ... not supported
+    JAVA_VER_TARGET=
+done
+
+if [ -z "${JAVA_VER_TARGET}" ]; then
+    echo "ERROR: no working Java compiler found!" >&2
+    exit 1
+fi
+
+echo Java ${JAVA_VER_TARGET} ... OK
+export JAVA_VER_TARGET
+
 if [ ! -e tools/getsp.class ]; then
     echo "Compiling getsp.class"
-    ( cd tools && javac -target 1.1 -source 1.2 getsp.java )
+    ( cd tools && javac -target ${JAVA_VER_TARGET} -source ${JAVA_VER_TARGET} getsp.java )
 fi
 
 echo "Removing SVN/CVS and backup stuff ..."
@@ -52,7 +67,7 @@ if [ ! -e src/java/javaGD.jar ]; then
 	cp "$JAVASRC/Makefile" src/java/
     fi
 
-    make -C src/java 'JFLAGS=-source 1.2 -target 1.2'
+    make -C src/java "JFLAGS=-source ${JAVA_VER_TARGET} -target ${JAVA_VER_TARGET}"
     if [ $? != 0 ]; then
 	exit 1
     fi
