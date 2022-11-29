@@ -1,7 +1,8 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(JavaGD, 0.5, Simon.Urbanek@math.uni-augsburg.de)
+AC_INIT([JavaGD],[0.5],[Simon.Urbanek@math.uni-augsburg.de])
 AC_CONFIG_SRCDIR([src/javaGD.c])
-AC_CONFIG_HEADER([src/config.h])
+AC_CONFIG_HEADERS([src/config.h])
+AC_CONFIG_AUX_DIR([tools])
 
 # find R home and set CC/CFLAGS
 : ${R_HOME=`R RHOME`}
@@ -21,17 +22,15 @@ AC_PROG_CC
 # Checks for libraries.
 
 # Checks for header files.
-AC_HEADER_STDC
+
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS([string.h sys/time.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
-AC_HEADER_TIME
 
 # Checks for library functions.
 AC_FUNC_MALLOC
-AC_TYPE_SIGNAL
 AC_CHECK_FUNCS([memset mkdir rmdir select socket])
 
 AC_MSG_CHECKING([Java support in R])
