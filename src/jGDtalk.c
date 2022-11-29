@@ -145,32 +145,32 @@ static void sendGC(JNIEnv *env, newJavaGDDesc *xd, R_GE_gcontext *gc, int sendAl
     jmethodID mid;
     
     if (sendAll || gc->col != lastGC.col) {
-        mid = (*env)->GetMethodID(env, xd->talkClass, "gdcSetColor", "(I)V");
-        if (mid) (*env)->CallVoidMethod(env, xd->talk, mid, CONVERT_COLOR(gc->col));
-        else gdWarning("checkGC.gdcSetColor: can't get mid");
-		chkX(env);
+	mid = (*env)->GetMethodID(env, xd->talkClass, "gdcSetColor", "(I)V");
+	if (mid) (*env)->CallVoidMethod(env, xd->talk, mid, CONVERT_COLOR(gc->col));
+	else gdWarning("checkGC.gdcSetColor: can't get mid");
+	chkX(env);
     }
 
     if (sendAll || gc->fill != lastGC.fill)  {
-        mid = (*env)->GetMethodID(env, xd->talkClass, "gdcSetFill", "(I)V");
-        if (mid) (*env)->CallVoidMethod(env, xd->talk, mid, CONVERT_COLOR(gc->fill));
-        else gdWarning("checkGC.gdcSetFill: can't get mid");
-		chkX(env);
+	mid = (*env)->GetMethodID(env, xd->talkClass, "gdcSetFill", "(I)V");
+	if (mid) (*env)->CallVoidMethod(env, xd->talk, mid, CONVERT_COLOR(gc->fill));
+	else gdWarning("checkGC.gdcSetFill: can't get mid");
+	chkX(env);
     }
 
     if (sendAll || gc->lwd != lastGC.lwd || gc->lty != lastGC.lty) {
-        mid = (*env)->GetMethodID(env, xd->talkClass, "gdcSetLine", "(DI)V");
-        if (mid) (*env)->CallVoidMethod(env, xd->talk, mid, gc->lwd, gc->lty);
-        else gdWarning("checkGC.gdcSetLine: can't get mid");
-		chkX(env);
+	mid = (*env)->GetMethodID(env, xd->talkClass, "gdcSetLine", "(DI)V");
+	if (mid) (*env)->CallVoidMethod(env, xd->talk, mid, gc->lwd, gc->lty);
+	else gdWarning("checkGC.gdcSetLine: can't get mid");
+	chkX(env);
     }
 
     if (sendAll || gc->cex!=lastGC.cex || gc->ps!=lastGC.ps || gc->lineheight!=lastGC.lineheight || gc->fontface!=lastGC.fontface || strcmp(gc->fontfamily, lastGC.fontfamily)) {
-        jstring s = (*env)->NewStringUTF(env, gc->fontfamily);
-        mid = (*env)->GetMethodID(env, xd->talkClass, "gdcSetFont", "(DDDILjava/lang/String;)V");
-        if (mid) (*env)->CallVoidMethod(env, xd->talk, mid, gc->cex, gc->ps, gc->lineheight, gc->fontface, s);
-        else gdWarning("checkGC.gdcSetFont: can't get mid");
-		chkX(env);
+	jstring s = (*env)->NewStringUTF(env, gc->fontfamily);
+	mid = (*env)->GetMethodID(env, xd->talkClass, "gdcSetFont", "(DDDILjava/lang/String;)V");
+	if (mid) (*env)->CallVoidMethod(env, xd->talk, mid, gc->cex, gc->ps, gc->lineheight, gc->fontface, s);
+	else gdWarning("checkGC.gdcSetFont: can't get mid");
+	chkX(env);
     }
     memcpy(&lastGC, gc, sizeof(lastGC));
 }
@@ -544,7 +544,7 @@ static void newJavaGD_Rect(double x0, double y0, double x1, double y1,  R_GE_gco
     mid = (*env)->GetMethodID(env, xd->talkClass, "gdRect", "(DDDD)V");
     if (mid) (*env)->CallVoidMethod(env, xd->talk, mid, x0, y0, x1, y1);
     else gdWarning("gdRect: can't get mid ");
-	chkX(env);
+    chkX(env);
 }
 
 static void newJavaGD_Size(double *left, double *right,  double *bottom, double *top,  NewDevDesc *dd)
@@ -571,7 +571,7 @@ static void newJavaGD_Size(double *left, double *right,  double *bottom, double 
         } else gdWarning("gdSize: gdSize returned null");
     }
     else gdWarning("gdSize: can't get mid ");
-	chkX(env);
+    chkX(env);
 }
 
 static constxt char *convertToUTF8(constxt char *str, R_GE_gcontext *gc)
