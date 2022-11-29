@@ -11,4 +11,5 @@ Description: Graphics device routing all graphics commands to a Java
 	     implementations are included.
 License: GPL-2 | GPL-3
 SystemRequirements: GNU make and Java JDK 1.2 or higher
-URL: http://www.rforge.net/JavaGD/
+URL: https://www.rforge.net/JavaGD/
+BugReports: https://github.com/s-u/JavaGD/issues
