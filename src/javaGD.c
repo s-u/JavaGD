@@ -150,7 +150,7 @@ newJavaGDDesc * Rf_allocNewJavaGDDeviceDesc(double ps)
     newJavaGDDesc *xd;
     /* allocate new device description */
     if (!(xd = (newJavaGDDesc*)calloc(1, sizeof(newJavaGDDesc))))
-	return FALSE;
+	return 0;
 
     /* From here on, if we need to bail out with "error", */
     /* then we must also free(xd). */
