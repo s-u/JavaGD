@@ -215,9 +215,16 @@ Rf_addJavaGDDevice(const char *display, double width, double height, double init
 		error("unable to start device %s", devname);
 	    return 0;
 	  }
-	gsetVar(install(".Device"), mkString(devname), R_NilValue);
 	dd = GEcreateDevDesc(dev);
+#if R_VERSION >= R_Version(3,0,0)
+	/* technically, this was added in R 2.7.0 (undocumented), but it is really
+	   needed only since 4.4.0 when API cleanup removed gsetVar() */
+	GEaddDevice2(dd, devname);
+#else
+	gsetVar(PROTECT(install(".Device")), PROTECT(mkString(devname)), R_NilValue);
+	UNPROTECT(2);
 	GEaddDevice(dd);
+#endif
 	GEinitDisplayList(dd);
 #ifdef JGD_DEBUG
 	printf("JavaGD> devNum=%d, dd=%lx\n", ndevNumber(dd), (unsigned long)dd);
