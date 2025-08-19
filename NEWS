@@ -1,6 +1,12 @@
  NEWS/Changelog for JavaGD
 ---------------------------
 
+0.6-6	2025-08-19
+    o	minor (non-functional) changes to appease checks:
+	use Authors@R, replace sprintf with strcpy and gsetVar with
+	GEaddDevice2 (if avaiable).
+
+
 0.6-5	2022-11-30
     o	update autoconf versions, minor cleanup of benign warnings
 
