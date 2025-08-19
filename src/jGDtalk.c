@@ -765,9 +765,10 @@ int initJVM(char *user_classpath) {
     vm_args.options = vm_options;
     vm_args.ignoreUnrecognized = JNI_TRUE;
     
-    classpath = (char*) calloc(strlen("-Djava.class.path=") + strlen(user_classpath)+1, sizeof(char));
-    sprintf(classpath, "-Djava.class.path=%s", user_classpath);
-        
+    classpath = (char*) calloc(strlen(user_classpath) + 20, sizeof(char));
+    memcpy(classpath, "-Djava.class.path=", 18);
+    strcpy(classpath + 18, user_classpath);
+
     vm_options[propNum++].optionString = classpath;   
     
     /* vm_options[propNum++].optionString = "-verbose:class,jni"; */
